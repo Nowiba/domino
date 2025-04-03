@@ -3,72 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Domino Game - Complete Edition</title>
+    <title>Domino Masters</title>
     <style>
         body {
-            background: #2ecc71;
             margin: 0;
-            padding: 10px;
-            font-family: Arial, sans-serif;
-            max-width: 1080px;
+            padding: 15px;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            font-size: 16px;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            max-width: 1080px;
+            margin: 0 auto;
+            color: #fff;
         }
 
         .game-container {
-            flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
 
         .status-bar {
-            background: #3498db;
-            color: white;
-            padding: 8px;
-            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 10px;
             text-align: center;
-            font-size: 14px;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
 
-        .board {
-            background: #ecf0f1;
-            border-radius: 8px;
-            padding: 8px;
-            min-height: 300px;
-            overflow-x: auto;
+        .board-container {
+            background: #2d1b12;
+            border-radius: 15px;
+            padding: 20px;
+            min-height: 350px;
             display: flex;
-            gap: 4px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            gap: 10px;
             align-items: center;
+            justify-content: flex-start;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
         }
 
-        .hand-container {
-            background: #fff;
-            border-radius: 8px;
-            padding: 8px;
-            display: flex;
-            gap: 4px;
-            overflow-x: auto;
-            max-height: 150px;
-            margin: 4px 0;
+        .player-area {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 15px;
+            position: fixed;
+            bottom: 15px;
+            left: 15px;
+            right: 15px;
+            max-width: 1050px;
+            margin: 0 auto;
+            box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.3);
         }
 
         .domino {
-            width: 54px;
-            height: 108px;
-            background: #fff;
-            border: 2px solid #2c3e50;
-            border-radius: 4px;
+            width: 70px;
+            height: 140px;
+            background: #f5f5f5;
+            border: 3px solid #333;
+            border-radius: 10px;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            padding: 4px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
             cursor: move;
-            user-select: none;
-            position: relative;
+            transition: transform 0.2s;
+        }
+
+        .domino:hover {
+            transform: scale(1.05);
         }
 
         .domino-half {
@@ -76,50 +85,54 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            border-bottom: 1px solid #2c3e50;
+            position: relative;
+            border-bottom: 2px solid #333;
         }
 
         .domino-half:last-child {
             border-bottom: none;
         }
 
-        .dots {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            justify-content: center;
-            align-items: center;
+        .pip-container {
+            width: 100%;
             height: 100%;
-            padding: 4px;
+            padding: 10px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
         }
 
-        .dot {
-            width: 8px;
-            height: 8px;
+        .pip {
+            width: 12px;
+            height: 12px;
             background: #2c3e50;
             border-radius: 50%;
+            margin: auto;
         }
 
         .controls {
-            display: flex;
-            gap: 8px;
-            padding: 8px 0;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            padding: 15px 0;
         }
 
         .game-button {
-            flex: 1;
-            padding: 8px;
+            padding: 12px;
             border: none;
-            border-radius: 4px;
-            background: #e74c3c;
+            border-radius: 8px;
+            background: #ff4444;
             color: white;
+            font-size: 16px;
             cursor: pointer;
-            font-size: 14px;
-            transition: background 0.2s;
+            transition: all 0.3s;
+            font-weight: bold;
+            text-transform: uppercase;
         }
 
         .game-button:hover {
-            background: #c0392b;
+            background: #cc0000;
+            transform: translateY(-2px);
         }
 
         .modal {
@@ -128,71 +141,71 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.8);
             display: none;
             justify-content: center;
             align-items: center;
+            z-index: 1000;
         }
 
         .modal-content {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
+            background: #fff;
+            padding: 25px;
+            border-radius: 15px;
             width: 90%;
-            max-width: 400px;
-            max-height: 80vh;
-            overflow-y: auto;
+            max-width: 500px;
+            color: #333;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
         }
 
         .modal-title {
-            font-size: 20px;
-            margin-bottom: 15px;
+            font-size: 24px;
+            margin-bottom: 20px;
             color: #2c3e50;
+            text-align: center;
         }
 
         .modal-section {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         .modal-label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            font-weight: bold;
             color: #2c3e50;
         }
 
         .modal-select {
             width: 100%;
-            padding: 8px;
-            border: 1px solid #2c3e50;
-            border-radius: 4px;
-            margin-bottom: 10px;
+            padding: 10px;
+            border: 2px solid #2c3e50;
+            border-radius: 8px;
+            font-size: 16px;
+            background: #f5f5f5;
         }
 
-        .score-display {
-            font-size: 12px;
-            color: #666;
-            margin-top: 4px;
+        .stats-panel {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
     <div class="game-container">
-        <div class="status-bar" id="statusBar">Select Game Mode to Start</div>
-        <div class="board" id="gameBoard"></div>
-        <div class="hand-container" id="playerHand">
-            <div class="score-display" id="playerScore">Player 1 Score: 0</div>
+        <div class="status-bar" id="statusBar">Welcome to Domino Masters</div>
+        <div class="stats-panel" id="statsPanel">
+            Player Score: 0 | Bots: 0-0-0 | Tiles Remaining: 28
         </div>
-        <div class="hand-container" id="bot1Hand" style="display: none;">
-            <div class="score-display" id="bot1Score">Bot 1 Score: 0</div>
-        </div>
-        <div class="hand-container" id="bot2Hand" style="display: none;">
-            <div class="score-display" id="bot2Score">Bot 2 Score: 0</div>
-        </div>
-        <div class="hand-container" id="bot3Hand" style="display: none;">
-            <div class="score-display" id="bot3Score">Bot 3 Score: 0</div>
+        <div class="board-container" id="gameBoard"></div>
+        <div class="player-area">
+            <div id="playerHand"></div>
         </div>
         <div class="controls">
-            <button class="game-button" id="drawButton">Draw Tile</button>
+            <button class="game-button" id="drawButton">Draw</button>
+            <button class="game-button" id="passButton">Pass</button>
             <button class="game-button" id="newGameButton">New Game</button>
             <button class="game-button" id="rulesButton">Rules</button>
         </div>
@@ -222,23 +235,40 @@
 
     <div class="modal" id="rulesModal">
         <div class="modal-content">
-            <div class="modal-title">Domino Rules</div>
+            <div class="modal-title">Game Rules</div>
             <div class="modal-section">
-                <p>- Game starts with highest double</p>
-                <p>- Match tiles by number on either end</p>
-                <p>- Draw from boneyard if no playable tiles</p>
-                <p>- Pass if no tiles can be played</p>
-                <p>- Game ends when one player empties hand</p>
-                <p>- Score is sum of opponents' remaining tiles</p>
-                <p>- In teams, scores are combined</p>
-                <p>- First to 100 points wins</p>
+                <p>1. Highest double starts the game</p>
+                <p>2. Match numbers on either end</p>
+                <p>3. Draw when no playable tiles</p>
+                <p>4. Pass if unable to play</p>
+                <p>5. Win by emptying hand</p>
+                <p>6. Score based on opponents' tiles</p>
+                <p>7. Teams combine scores in 2v2</p>
+                <p>8. First to 100 wins</p>
             </div>
             <button class="game-button" id="closeRulesButton">Close</button>
         </div>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+
     <script>
-        // Game State Management
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBazU0aKcpX7sxhPrcyYQYryRrYW1i0rdk",
+            authDomain: "sample-firebase-ai-f5447.firebaseapp.com",
+            projectId: "sample-firebase-ai-f5447",
+            storageBucket: "sample-firebase-ai-f5447.firebasestorage.app",
+            messagingSenderId: "718125971250",
+            appId: "1:718125971250:web:438339203c5657ddfc492b"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const gameRef = db.ref('game');
+
+        // Game State
         const gameState = {
             players: [],
             board: [],
@@ -253,12 +283,11 @@
         // DOM Elements
         const elements = {
             statusBar: document.getElementById('statusBar'),
+            statsPanel: document.getElementById('statsPanel'),
             gameBoard: document.getElementById('gameBoard'),
             playerHand: document.getElementById('playerHand'),
-            bot1Hand: document.getElementById('bot1Hand'),
-            bot2Hand: document.getElementById('bot2Hand'),
-            bot3Hand: document.getElementById('bot3Hand'),
             drawButton: document.getElementById('drawButton'),
+            passButton: document.getElementById('passButton'),
             newGameButton: document.getElementById('newGameButton'),
             rulesButton: document.getElementById('rulesButton'),
             setupModal: document.getElementById('setupModal'),
@@ -267,17 +296,11 @@
             gameModeSelect: document.getElementById('gameModeSelect'),
             startGameButton: document.getElementById('startGameButton'),
             rulesModal: document.getElementById('rulesModal'),
-            closeRulesButton: document.getElementById('closeRulesButton'),
-            scoreDisplays: [
-                document.getElementById('playerScore'),
-                document.getElementById('bot1Score'),
-                document.getElementById('bot2Score'),
-                document.getElementById('bot3Score')
-            ]
+            closeRulesButton: document.getElementById('closeRulesButton')
         };
 
-        // Game Logic Functions
-        function generateAllTiles() {
+        // Game Functions
+        function generateTiles() {
             const tiles = [];
             for (let i = 0; i <= 6; i++) {
                 for (let j = i; j <= 6; j++) {
@@ -307,49 +330,39 @@
                 domino.addEventListener('dragstart', handleDragStart);
             }
 
-            const topHalf = document.createElement('div');
-            topHalf.className = 'domino-half';
-            const topDots = createDots(tile[0]);
-            topHalf.appendChild(topDots);
+            const pipPatterns = {
+                0: [],
+                1: [[1, 1]],
+                2: [[0, 0], [2, 2]],
+                3: [[0, 0], [1, 1], [2, 2]],
+                4: [[0, 0], [0, 2], [2, 0], [2, 2]],
+                5: [[0, 0], [0, 2], [1, 1], [2, 0], [2, 2]],
+                6: [[0, 0], [0, 1], [0, 2], [2, 0], [2, 1], [2, 2]]
+            };
 
-            const bottomHalf = document.createElement('div');
-            bottomHalf.className = 'domino-half';
-            const bottomDots = createDots(tile[1]);
-            bottomHalf.appendChild(bottomDots);
+            [tile[0], tile[1]].forEach((num, i) => {
+                const half = document.createElement('div');
+                half.className = 'domino-half';
+                const pips = document.createElement('div');
+                pips.className = 'pip-container';
+                
+                pipPatterns[num].forEach(([x, y]) => {
+                    const pip = document.createElement('div');
+                    pip.className = 'pip';
+                    pip.style.gridColumn = x + 1;
+                    pip.style.gridRow = y + 1;
+                    pips.appendChild(pip);
+                });
 
-            domino.appendChild(topHalf);
-            domino.appendChild(bottomHalf);
+                half.appendChild(pips);
+                domino.appendChild(half);
+            });
+
             return domino;
         }
 
-        function createDots(number) {
-            const dots = document.createElement('div');
-            dots.className = 'dots';
-            const patterns = [
-                [],
-                [[50, 50]],
-                [[25, 25], [75, 75]],
-                [[25, 25], [50, 50], [75, 75]],
-                [[25, 25], [25, 75], [75, 25], [75, 75]],
-                [[25, 25], [25, 75], [50, 50], [75, 25], [75, 75]],
-                [[25, 25], [25, 50], [25, 75], [75, 25], [75, 50], [75, 75]]
-            ];
-
-            patterns[number].forEach(([x, y]) => {
-                const dot = document.createElement('div');
-                dot.className = 'dot';
-                dot.style.position = 'absolute';
-                dot.style.left = `${x}%`;
-                dot.style.top = `${y}%`;
-                dot.style.transform = 'translate(-50%, -50%)';
-                dots.appendChild(dot);
-            });
-
-            return dots;
-        }
-
-        function initializeGame(playerCount, mode) {
-            const allTiles = shuffleTiles(generateAllTiles());
+        async function initializeGame(playerCount, mode) {
+            const allTiles = shuffleTiles(generateTiles());
             const tilesPerPlayer = 7;
             gameState.players = [];
             gameState.scores = {};
@@ -366,13 +379,17 @@
                 gameState.scores[i] = 0;
             }
 
-            gameState.boneyard = allTiles;
-            gameState.board = [];
-            gameState.currentPlayer = findStartingPlayer();
-            renderGame();
-            if (gameState.players[gameState.currentPlayer].isBot) {
-                setTimeout(botTurn, 1000);
-            }
+            const initialState = {
+                players: gameState.players,
+                board: [],
+                boneyard: allTiles,
+                currentPlayer: findStartingPlayer(),
+                gameMode: mode,
+                scores: gameState.scores,
+                gameActive: true
+            };
+
+            await gameRef.set(initialState);
         }
 
         function findStartingPlayer() {
@@ -390,68 +407,53 @@
             return startingPlayer;
         }
 
+        function listenToGameState() {
+            gameRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    Object.assign(gameState, data);
+                    renderGame();
+                    if (gameState.gameActive && gameState.players[gameState.currentPlayer].isBot) {
+                        setTimeout(botTurn, 1000);
+                    }
+                }
+            });
+        }
+
         function renderGame() {
-            // Render Board
             elements.gameBoard.innerHTML = '';
             gameState.board.forEach((tile, index) => {
                 const domino = createDominoElement(tile, false, index, -1);
                 elements.gameBoard.appendChild(domino);
             });
 
-            // Render Hands
-            const handElements = [
-                elements.playerHand,
-                elements.bot1Hand,
-                elements.bot2Hand,
-                elements.bot3Hand
-            ];
-
-            gameState.players.forEach((player, index) => {
-                const handEl = handElements[index];
-                handEl.innerHTML = '';
-                player.hand.forEach((tile, tileIndex) => {
-                    const domino = createDominoElement(tile, true, tileIndex, index);
-                    handEl.appendChild(domino);
-                });
-                handEl.style.display = 'flex';
-                elements.scoreDisplays[index].textContent = 
-                    `${index === 0 ? 'Player' : 'Bot'} ${index + 1} Score: ${gameState.scores[index]}`;
+            elements.playerHand.innerHTML = '';
+            gameState.players[0].hand.forEach((tile, index) => {
+                const domino = createDominoElement(tile, true, index, 0);
+                elements.playerHand.appendChild(domino);
             });
 
-            for (let i = gameState.players.length; i < 4; i++) {
-                handElements[i].style.display = 'none';
-            }
-
-            // Update Status
+            const botScores = gameState.players.slice(1).map(p => p.hand.length).join('-');
+            elements.statsPanel.textContent = 
+                `Player Score: ${gameState.scores[0]} | Bots: ${botScores} | Tiles Remaining: ${gameState.boneyard.length}`;
+            
             elements.statusBar.textContent = gameState.gameActive ?
                 `Player ${gameState.currentPlayer + 1}'s Turn` :
-                'Game Over - Select New Game';
+                'Game Over - Start New Game';
             
             elements.drawButton.disabled = !gameState.gameActive || 
                 gameState.currentPlayer !== 0 || 
                 gameState.boneyard.length === 0;
+            elements.passButton.disabled = !gameState.gameActive || 
+                gameState.currentPlayer !== 0;
         }
 
-        function canPlayTile(tile, side) {
-            if (gameState.board.length === 0) {
-                return tile[0] === tile[1];
-            }
-            const leftEnd = gameState.board[0][0];
-            const rightEnd = gameState.board[gameState.board.length - 1][1];
-            
-            if (side === 'left') {
-                return tile[0] === leftEnd || tile[1] === leftEnd;
-            }
-            return tile[0] === rightEnd || tile[1] === rightEnd;
-        }
-
-        function playTile(playerIndex, tileIndex, side) {
+        async function playTile(playerIndex, tileIndex, side) {
             if (!gameState.gameActive || playerIndex !== gameState.currentPlayer) return;
             
             const tile = gameState.players[playerIndex].hand[tileIndex];
             if (!canPlayTile(tile, side)) return;
 
-            // Adjust tile orientation
             let playedTile = [...tile];
             if (gameState.board.length > 0) {
                 if (side === 'left') {
@@ -465,30 +467,32 @@
                 }
             }
 
-            gameState.players[playerIndex].hand.splice(tileIndex, 1);
-            if (side === 'left') {
-                gameState.board.unshift(playedTile);
-            } else {
-                gameState.board.push(playedTile);
-            }
+            const newPlayers = [...gameState.players];
+            newPlayers[playerIndex].hand.splice(tileIndex, 1);
+            const newBoard = side === 'left' ? 
+                [playedTile, ...gameState.board] : 
+                [...gameState.board, playedTile];
 
-            nextTurn();
-            checkGameEnd();
-            renderGame();
+            await updateGameState({ players: newPlayers, board: newBoard });
         }
 
-        function drawTile() {
-            if (!gameState.gameActive || 
-                gameState.currentPlayer !== 0 || 
-                gameState.boneyard.length === 0) return;
-
-            const tile = gameState.boneyard.shift();
-            gameState.players[0].hand.push(tile);
-            nextTurn();
-            renderGame();
+        async function drawTile() {
+            if (!gameState.gameActive || gameState.currentPlayer !== 0 || gameState.boneyard.length === 0) return;
+            
+            const newPlayers = [...gameState.players];
+            const tile = gameState.boneyard[0];
+            newPlayers[0].hand.push(tile);
+            const newBoneyard = gameState.boneyard.slice(1);
+            
+            await updateGameState({ players: newPlayers, boneyard: newBoneyard });
         }
 
-        function botTurn() {
+        async function passTurn() {
+            if (!gameState.gameActive || gameState.currentPlayer !== 0) return;
+            await nextTurn();
+        }
+
+        async function botTurn() {
             if (!gameState.gameActive || !gameState.players[gameState.currentPlayer].isBot) return;
 
             const botHand = gameState.players[gameState.currentPlayer].hand;
@@ -497,67 +501,60 @@
             for (let i = 0; i < botHand.length && !played; i++) {
                 const tile = botHand[i];
                 if (canPlayTile(tile, 'left')) {
-                    playTile(gameState.currentPlayer, i, 'left');
+                    await playTile(gameState.currentPlayer, i, 'left');
                     played = true;
                 } else if (canPlayTile(tile, 'right')) {
-                    playTile(gameState.currentPlayer, i, 'right');
+                    await playTile(gameState.currentPlayer, i, 'right');
                     played = true;
                 }
             }
 
             if (!played && gameState.boneyard.length > 0) {
-                const tile = gameState.boneyard.shift();
-                gameState.players[gameState.currentPlayer].hand.push(tile);
-                nextTurn();
+                const newPlayers = [...gameState.players];
+                const tile = gameState.boneyard[0];
+                newPlayers[gameState.currentPlayer].hand.push(tile);
+                const newBoneyard = gameState.boneyard.slice(1);
+                await updateGameState({ players: newPlayers, boneyard: newBoneyard });
             } else if (!played) {
-                nextTurn();
-            }
-            renderGame();
-        }
-
-        function nextTurn() {
-            gameState.currentPlayer = (gameState.currentPlayer + 1) % gameState.players.length;
-            if (gameState.players[gameState.currentPlayer].isBot) {
-                setTimeout(botTurn, 1000);
+                await nextTurn();
             }
         }
 
-        function checkGameEnd() {
-            if (gameState.players[gameState.currentPlayer].hand.length === 0) {
-                calculateScores();
-                gameState.gameActive = false;
-                const winner = determineWinner();
-                elements.statusBar.textContent = `Game Over! Player ${winner + 1} Wins!`;
-            }
+        async function nextTurn() {
+            const nextPlayer = (gameState.currentPlayer + 1) % gameState.players.length;
+            await updateGameState({ currentPlayer: nextPlayer });
         }
 
-        function calculateScores() {
-            gameState.players.forEach((player, index) => {
+        async function updateGameState(updates) {
+            const newState = { ...gameState, ...updates };
+            if (newState.players[newState.currentPlayer].hand.length === 0) {
+                calculateScores(newState);
+                newState.gameActive = false;
+            }
+            await gameRef.set(newState);
+        }
+
+        function canPlayTile(tile, side) {
+            if (gameState.board.length === 0) return tile[0] === tile[1];
+            const leftEnd = gameState.board[0][0];
+            const rightEnd = gameState.board[gameState.board.length - 1][1];
+            return side === 'left' ? 
+                (tile[0] === leftEnd || tile[1] === leftEnd) :
+                (tile[0] === rightEnd || tile[1] === rightEnd);
+        }
+
+        function calculateScores(state) {
+            state.players.forEach((player, index) => {
                 const handValue = player.hand.reduce((sum, tile) => sum + tile[0] + tile[1], 0);
-                if (gameState.gameMode === 'teams') {
+                if (state.gameMode === 'teams') {
                     const team = player.team;
-                    gameState.scores[team] = (gameState.scores[team] || 0) + 
-                        (index === gameState.currentPlayer ? 0 : handValue);
+                    state.scores[team] = (state.scores[team] || 0) + 
+                        (index === state.currentPlayer ? 0 : handValue);
                 } else {
-                    gameState.scores[index] = (gameState.scores[index] || 0) + 
-                        (index === gameState.currentPlayer ? 0 : handValue);
+                    state.scores[index] = (state.scores[index] || 0) + 
+                        (index === state.currentPlayer ? 0 : handValue);
                 }
             });
-        }
-
-        function determineWinner() {
-            if (gameState.gameMode === 'teams') {
-                return gameState.scores[0] > gameState.scores[1] ? 0 : 1;
-            }
-            let minScore = Infinity;
-            let winner = 0;
-            Object.entries(gameState.scores).forEach(([player, score]) => {
-                if (score < minScore) {
-                    minScore = score;
-                    winner = parseInt(player);
-                }
-            });
-            return winner;
         }
 
         // Event Handlers
@@ -576,7 +573,6 @@
         function handleDrop(e) {
             e.preventDefault();
             if (gameState.currentPlayer !== 0) return;
-            
             const data = JSON.parse(e.dataTransfer.getData('text/plain'));
             const side = e.offsetX < elements.gameBoard.offsetWidth / 2 ? 'left' : 'right';
             playTile(parseInt(data.player), parseInt(data.index), side);
@@ -605,22 +601,24 @@
 
         // Event Listeners
         elements.newGameButton.addEventListener('click', showSetupModal);
-        elements.startGameButton.addEventListener('click', () => {
+        elements.startGameButton.addEventListener('click', async () => {
             const playerCount = parseInt(elements.playerCountSelect.value);
             const mode = playerCount === 4 ? elements.gameModeSelect.value : 'ffa';
-            initializeGame(playerCount, mode);
+            await initializeGame(playerCount, mode);
             hideSetupModal();
         });
 
         elements.drawButton.addEventListener('click', drawTile);
+        elements.passButton.addEventListener('click', passTurn);
         elements.rulesButton.addEventListener('click', showRulesModal);
         elements.closeRulesButton.addEventListener('click', hideRulesModal);
 
         elements.gameBoard.addEventListener('dragover', handleDragOver);
         elements.gameBoard.addEventListener('drop', handleDrop);
 
-        // Initial Setup
-        elements.setupModal.style.display = 'flex';
+        // Initialize
+        listenToGameState();
+        showSetupModal();
     </script>
 </body>
-</html>
+                </html>
