@@ -3,23 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Domino Game - Multiplayer</title>
+    <title>Domino Game - Complete Edition</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
-
         body {
             background: #2ecc71;
+            margin: 0;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+            max-width: 1080px;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
-            padding: 10px;
-            max-width: 1080px;
-            margin: 0 auto;
             font-size: 16px;
         }
 
@@ -28,6 +22,15 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
+        }
+
+        .status-bar {
+            background: #3498db;
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
         }
 
         .board {
@@ -39,9 +42,10 @@
             display: flex;
             gap: 4px;
             flex-wrap: wrap;
+            align-items: center;
         }
 
-        .hand {
+        .hand-container {
             background: #fff;
             border-radius: 8px;
             padding: 8px;
@@ -49,6 +53,7 @@
             gap: 4px;
             overflow-x: auto;
             max-height: 150px;
+            margin: 4px 0;
         }
 
         .domino {
@@ -63,6 +68,7 @@
             padding: 4px;
             cursor: move;
             user-select: none;
+            position: relative;
         }
 
         .domino-half {
@@ -70,6 +76,11 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            border-bottom: 1px solid #2c3e50;
+        }
+
+        .domino-half:last-child {
+            border-bottom: none;
         }
 
         .dots {
@@ -79,6 +90,7 @@
             justify-content: center;
             align-items: center;
             height: 100%;
+            padding: 4px;
         }
 
         .dot {
@@ -88,22 +100,13 @@
             border-radius: 50%;
         }
 
-        .status {
-            background: #3498db;
-            color: white;
-            padding: 8px;
-            border-radius: 4px;
-            text-align: center;
-            font-size: 14px;
-        }
-
         .controls {
             display: flex;
             gap: 8px;
             padding: 8px 0;
         }
 
-        button {
+        .game-button {
             flex: 1;
             padding: 8px;
             border: none;
@@ -112,341 +115,512 @@
             color: white;
             cursor: pointer;
             font-size: 14px;
+            transition: background 0.2s;
         }
 
-        button:hover {
+        .game-button:hover {
             background: #c0392b;
         }
 
         .modal {
-            display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
         }
 
         .modal-content {
             background: white;
-            margin: 15% auto;
             padding: 20px;
-            width: 80%;
-            max-width: 400px;
             border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .modal-section {
+            margin-bottom: 15px;
+        }
+
+        .modal-label {
+            display: block;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+
+        .modal-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #2c3e50;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .score-display {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
         }
     </style>
 </head>
 <body>
     <div class="game-container">
-        <div class="status" id="status">Select Game Mode</div>
-        <div class="board" id="board"></div>
-        <div class="hand" id="playerHand"></div>
-        <div class="hand" id="bot1Hand"></div>
-        <div class="hand" id="bot2Hand" style="display: none;"></div>
-        <div class="hand" id="bot3Hand" style="display: none;"></div>
+        <div class="status-bar" id="statusBar">Select Game Mode to Start</div>
+        <div class="board" id="gameBoard"></div>
+        <div class="hand-container" id="playerHand">
+            <div class="score-display" id="playerScore">Player 1 Score: 0</div>
+        </div>
+        <div class="hand-container" id="bot1Hand" style="display: none;">
+            <div class="score-display" id="bot1Score">Bot 1 Score: 0</div>
+        </div>
+        <div class="hand-container" id="bot2Hand" style="display: none;">
+            <div class="score-display" id="bot2Score">Bot 2 Score: 0</div>
+        </div>
+        <div class="hand-container" id="bot3Hand" style="display: none;">
+            <div class="score-display" id="bot3Score">Bot 3 Score: 0</div>
+        </div>
         <div class="controls">
-            <button onclick="game.drawTile()">Draw Tile</button>
-            <button onclick="showGameSetup()">New Game</button>
+            <button class="game-button" id="drawButton">Draw Tile</button>
+            <button class="game-button" id="newGameButton">New Game</button>
+            <button class="game-button" id="rulesButton">Rules</button>
         </div>
     </div>
 
-    <div class="modal" id="gameSetupModal">
+    <div class="modal" id="setupModal">
         <div class="modal-content">
-            <h2>Game Setup</h2>
-            <p>Number of Players:</p>
-            <select id="playerCount">
-                <option value="2">2 Players (1v1)</option>
-                <option value="3">3 Players (1v2)</option>
-                <option value="4">4 Players</option>
-            </select>
-            <div id="modeSelect" style="display: none;">
-                <p>Game Mode:</p>
-                <select id="gameMode">
-                    <option value="ffa">All vs All</option>
-                    <option value="teams">2 vs 2</option>
+            <div class="modal-title">Game Setup</div>
+            <div class="modal-section">
+                <label class="modal-label">Number of Players:</label>
+                <select class="modal-select" id="playerCountSelect">
+                    <option value="2">2 Players (1 vs 1)</option>
+                    <option value="3">3 Players (1 vs 2)</option>
+                    <option value="4">4 Players</option>
                 </select>
             </div>
-            <button onclick="game.startNewGame()">Start Game</button>
+            <div class="modal-section" id="modeSection" style="display: none;">
+                <label class="modal-label">Game Mode:</label>
+                <select class="modal-select" id="gameModeSelect">
+                    <option value="ffa">Free For All</option>
+                    <option value="teams">2 vs 2 Teams</option>
+                </select>
+            </div>
+            <button class="game-button" id="startGameButton">Start Game</button>
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+    <div class="modal" id="rulesModal">
+        <div class="modal-content">
+            <div class="modal-title">Domino Rules</div>
+            <div class="modal-section">
+                <p>- Game starts with highest double</p>
+                <p>- Match tiles by number on either end</p>
+                <p>- Draw from boneyard if no playable tiles</p>
+                <p>- Pass if no tiles can be played</p>
+                <p>- Game ends when one player empties hand</p>
+                <p>- Score is sum of opponents' remaining tiles</p>
+                <p>- In teams, scores are combined</p>
+                <p>- First to 100 points wins</p>
+            </div>
+            <button class="game-button" id="closeRulesButton">Close</button>
+        </div>
+    </div>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBazU0aKcpX7sxhPrcyYQYryRrYW1i0rdk",
-            authDomain: "sample-firebase-ai-f5447.firebaseapp.com",
-            projectId: "sample-firebase-ai-f5447",
-            storageBucket: "sample-firebase-ai-f5447.firebasestorage.app",
-            messagingSenderId: "718125971250",
-            appId: "1:718125971250:web:438339203c5657ddfc492b"
+        // Game State Management
+        const gameState = {
+            players: [],
+            board: [],
+            boneyard: [],
+            currentPlayer: 0,
+            gameMode: 'ffa',
+            scores: {},
+            gameActive: false,
+            targetScore: 100
         };
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        // DOM Elements
+        const elements = {
+            statusBar: document.getElementById('statusBar'),
+            gameBoard: document.getElementById('gameBoard'),
+            playerHand: document.getElementById('playerHand'),
+            bot1Hand: document.getElementById('bot1Hand'),
+            bot2Hand: document.getElementById('bot2Hand'),
+            bot3Hand: document.getElementById('bot3Hand'),
+            drawButton: document.getElementById('drawButton'),
+            newGameButton: document.getElementById('newGameButton'),
+            rulesButton: document.getElementById('rulesButton'),
+            setupModal: document.getElementById('setupModal'),
+            playerCountSelect: document.getElementById('playerCountSelect'),
+            modeSection: document.getElementById('modeSection'),
+            gameModeSelect: document.getElementById('gameModeSelect'),
+            startGameButton: document.getElementById('startGameButton'),
+            rulesModal: document.getElementById('rulesModal'),
+            closeRulesButton: document.getElementById('closeRulesButton'),
+            scoreDisplays: [
+                document.getElementById('playerScore'),
+                document.getElementById('bot1Score'),
+                document.getElementById('bot2Score'),
+                document.getElementById('bot3Score')
+            ]
+        };
 
-        class DominoGame {
-            constructor() {
-                this.gameRef = db.ref('game');
-                this.players = [];
-                this.currentPlayer = 0;
-                this.scores = {};
-            }
-
-            generateTiles() {
-                const tiles = [];
-                for (let i = 0; i <= 6; i++) {
-                    for (let j = i; j <= 6; j++) {
-                        tiles.push([i, j]);
-                    }
+        // Game Logic Functions
+        function generateAllTiles() {
+            const tiles = [];
+            for (let i = 0; i <= 6; i++) {
+                for (let j = i; j <= 6; j++) {
+                    tiles.push([i, j]);
                 }
-                return tiles;
+            }
+            return tiles;
+        }
+
+        function shuffleTiles(tiles) {
+            for (let i = tiles.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+            }
+            return tiles;
+        }
+
+        function createDominoElement(tile, draggable, index, playerIndex) {
+            const domino = document.createElement('div');
+            domino.className = 'domino';
+            domino.dataset.tile = JSON.stringify(tile);
+            domino.dataset.index = index;
+            domino.dataset.player = playerIndex;
+
+            if (draggable && playerIndex === 0) {
+                domino.draggable = true;
+                domino.addEventListener('dragstart', handleDragStart);
             }
 
-            shuffle(array) {
-                for (let i = array.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [array[i], array[j]] = [array[j], array[i]];
-                }
-            }
+            const topHalf = document.createElement('div');
+            topHalf.className = 'domino-half';
+            const topDots = createDots(tile[0]);
+            topHalf.appendChild(topDots);
 
-            async startNewGame() {
-                const playerCount = parseInt(document.getElementById('playerCount').value);
-                const gameMode = playerCount === 4 ? document.getElementById('gameMode').value : 'ffa';
-                
-                const tiles = this.generateTiles();
-                this.shuffle(tiles);
-                const tilesPerPlayer = 7;
-                this.players = [];
-                this.scores = {};
+            const bottomHalf = document.createElement('div');
+            bottomHalf.className = 'domino-half';
+            const bottomDots = createDots(tile[1]);
+            bottomHalf.appendChild(bottomDots);
 
-                for (let i = 0; i < playerCount; i++) {
-                    const hand = tiles.splice(0, tilesPerPlayer);
-                    this.players.push({
-                        hand: hand,
-                        isBot: i !== 0,
-                        team: gameMode === 'teams' && i < 2 ? 0 : (gameMode === 'teams' ? 1 : i)
-                    });
-                    this.scores[i] = 0;
-                }
+            domino.appendChild(topHalf);
+            domino.appendChild(bottomHalf);
+            return domino;
+        }
 
-                const initialState = {
-                    players: this.players,
-                    board: [],
-                    boneyard: tiles,
-                    currentPlayer: this.findFirstDouble() || 0,
-                    gameMode: gameMode
-                };
+        function createDots(number) {
+            const dots = document.createElement('div');
+            dots.className = 'dots';
+            const patterns = [
+                [],
+                [[50, 50]],
+                [[25, 25], [75, 75]],
+                [[25, 25], [50, 50], [75, 75]],
+                [[25, 25], [25, 75], [75, 25], [75, 75]],
+                [[25, 25], [25, 75], [50, 50], [75, 25], [75, 75]],
+                [[25, 25], [25, 50], [25, 75], [75, 25], [75, 50], [75, 75]]
+            ];
 
-                await this.gameRef.set(initialState);
-                this.listenToGameState();
-                document.getElementById('gameSetupModal').style.display = 'none';
-            }
+            patterns[number].forEach(([x, y]) => {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.style.position = 'absolute';
+                dot.style.left = `${x}%`;
+                dot.style.top = `${y}%`;
+                dot.style.transform = 'translate(-50%, -50%)';
+                dots.appendChild(dot);
+            });
 
-            findFirstDouble() {
-                for (let i = 0; i < this.players.length; i++) {
-                    if (this.players[i].hand.some(tile => tile[0] === tile[1])) return i;
-                }
-                return 0;
-            }
+            return dots;
+        }
 
-            listenToGameState() {
-                this.gameRef.on('value', (snapshot) => {
-                    const data = snapshot.val();
-                    if (data) {
-                        this.players = data.players;
-                        this.board = data.board;
-                        this.boneyard = data.boneyard;
-                        this.currentPlayer = data.currentPlayer;
-                        this.gameMode = data.gameMode;
-                        this.render();
-                        if (this.players[this.currentPlayer].isBot) {
-                            setTimeout(() => this.botPlay(), 1000);
-                        }
-                    }
+        function initializeGame(playerCount, mode) {
+            const allTiles = shuffleTiles(generateAllTiles());
+            const tilesPerPlayer = 7;
+            gameState.players = [];
+            gameState.scores = {};
+            gameState.gameMode = mode;
+            gameState.gameActive = true;
+
+            for (let i = 0; i < playerCount; i++) {
+                const hand = allTiles.splice(0, tilesPerPlayer);
+                gameState.players.push({
+                    hand: hand,
+                    isBot: i !== 0,
+                    team: mode === 'teams' ? (i < 2 ? 0 : 1) : i
                 });
+                gameState.scores[i] = 0;
             }
 
-            render() {
-                this.renderHand(this.players[0].hand, 'playerHand', true);
-                for (let i = 1; i < 4; i++) {
-                    const handEl = document.getElementById(`bot${i}Hand`);
-                    if (i < this.players.length) {
-                        this.renderHand(this.players[i].hand, `bot${i}Hand`, false);
-                        handEl.style.display = 'flex';
-                    } else {
-                        handEl.style.display = 'none';
-                    }
-                }
-                this.renderBoard();
-                document.getElementById('status').textContent = 
-                    `Player ${this.currentPlayer + 1}'s Turn (Score: ${Object.values(this.scores).join(', ')})`;
-            }
-
-            renderHand(hand, elementId, draggable) {
-                const container = document.getElementById(elementId);
-                container.innerHTML = '';
-                hand.forEach((tile, index) => {
-                    const domino = this.createDominoElement(tile, draggable && elementId === 'playerHand', index);
-                    container.appendChild(domino);
-                });
-            }
-
-            renderBoard() {
-                const board = document.getElementById('board');
-                board.innerHTML = '';
-                this.board.forEach(tile => {
-                    const domino = this.createDominoElement(tile, false);
-                    board.appendChild(domino);
-                });
-            }
-
-            createDominoElement(tile, draggable, index) {
-                const domino = document.createElement('div');
-                domino.className = 'domino';
-                if (draggable) {
-                    domino.draggable = true;
-                    domino.dataset.index = index;
-                    domino.addEventListener('dragstart', (e) => this.handleDragStart(e));
-                }
-                const top = this.createHalf(tile[0]);
-                const bottom = this.createHalf(tile[1]);
-                domino.appendChild(top);
-                domino.appendChild(bottom.createElement('div', {className: 'divider'}));
-                domino.appendChild(bottom);
-                return domino;
-            }
-
-            createHalf(num) {
-                const half = document.createElement('div');
-                half.className = 'domino-half';
-                const dots = document.createElement('div');
-                dots.className = 'dots';
-                for (let i = 0; i < num; i++) {
-                    const dot = document.createElement('div');
-                    dot.className = 'dot';
-                    dots.appendChild(dot);
-                }
-                half.appendChild(dots);
-                return half;
-            }
-
-            handleDragStart(e) {
-                if (this.currentPlayer !== 0) return;
-                const index = e.target.dataset.index;
-                e.dataTransfer.setData('text/plain', index);
-            }
-
-            async playTile(index, side = 'right') {
-                if (this.currentPlayer !== 0) return;
-                const tile = this.players[0].hand[index];
-                if (this.canPlayTile(tile, side)) {
-                    const newPlayers = [...this.players];
-                    newPlayers[0].hand = newPlayers[0].hand.filter((_, i) => i !== parseInt(index));
-                    const newBoard = side === 'left' ? [tile, ...this.board] : [...this.board, tile];
-                    
-                    await this.nextTurn(newPlayers, newBoard);
-                    this.checkGameEnd();
-                }
-            }
-
-            canPlayTile(tile, side) {
-                if (this.board.length === 0) return tile[0] === tile[1]; // First play must be double
-                const leftEnd = this.board[0][0];
-                const rightEnd = this.board[this.board.length - 1][1];
-                return (side === 'left' && (tile[1] === leftEnd || tile[0] === leftEnd)) ||
-                       (side === 'right' && (tile[0] === rightEnd || tile[1] === rightEnd));
-            }
-
-            async botPlay() {
-                const bot = this.players[this.currentPlayer];
-                const playableTile = bot.hand.findIndex(tile => 
-                    this.canPlayTile(tile, 'left') || this.canPlayTile(tile, 'right')
-                );
-
-                if (playableTile !== -1) {
-                    const tile = bot.hand[playableTile];
-                    const side = this.canPlayTile(tile, 'left') ? 'left' : 'right';
-                    const newPlayers = [...this.players];
-                    newPlayers[this.currentPlayer].hand = newPlayers[this.currentPlayer].hand.filter((_, i) => i !== playableTile);
-                    const newBoard = side === 'left' ? [tile, ...this.board] : [...this.board, tile];
-                    
-                    await this.nextTurn(newPlayers, newBoard);
-                    this.checkGameEnd();
-                } else if (this.boneyard.length > 0) {
-                    await this.drawTile();
-                } else {
-                    await this.nextTurn(this.players, this.board); // Pass
-                }
-            }
-
-            async nextTurn(newPlayers, newBoard) {
-                let nextPlayer = (this.currentPlayer + 1) % this.players.length;
-                await this.gameRef.update({
-                    players: newPlayers,
-                    board: newBoard,
-                    currentPlayer: nextPlayer
-                });
-            }
-
-            async drawTile() {
-                if (this.boneyard.length === 0) return;
-                const newPlayers = [...this.players];
-                const tile = this.boneyard[0];
-                newPlayers[this.currentPlayer].hand.push(tile);
-                
-                await this.gameRef.update({
-                    players: newPlayers,
-                    boneyard: this.boneyard.slice(1),
-                    currentPlayer: this.players[this.currentPlayer].isBot ? 
-                        (this.currentPlayer + 1) % this.players.length : this.currentPlayer
-                });
-            }
-
-            checkGameEnd() {
-                const currentHand = this.players[this.currentPlayer].hand;
-                if (currentHand.length === 0) {
-                    this.calculateScores();
-                    alert(`Player ${this.currentPlayer + 1} wins the round! Scores: ${Object.values(this.scores).join(', ')}`);
-                }
-            }
-
-            calculateScores() {
-                const isTeams = this.gameMode === 'teams';
-                this.players.forEach((player, index) => {
-                    const handValue = player.hand.reduce((sum, tile) => sum + tile[0] + tile[1], 0);
-                    const team = player.team;
-                    if (isTeams) {
-                        this.scores[team] = (this.scores[team] || 0) + handValue;
-                    } else {
-                        this.scores[index] = (this.scores[index] || 0) + handValue;
-                    }
-                });
+            gameState.boneyard = allTiles;
+            gameState.board = [];
+            gameState.currentPlayer = findStartingPlayer();
+            renderGame();
+            if (gameState.players[gameState.currentPlayer].isBot) {
+                setTimeout(botTurn, 1000);
             }
         }
 
-        const game = new DominoGame();
+        function findStartingPlayer() {
+            let highestDouble = -1;
+            let startingPlayer = 0;
 
-        function showGameSetup() {
-            const modal = document.getElementById('gameSetupModal');
-            const playerCount = document.getElementById('playerCount');
-            const modeSelect = document.getElementById('modeSelect');
+            gameState.players.forEach((player, index) => {
+                player.hand.forEach(tile => {
+                    if (tile[0] === tile[1] && tile[0] > highestDouble) {
+                        highestDouble = tile[0];
+                        startingPlayer = index;
+                    }
+                });
+            });
+            return startingPlayer;
+        }
+
+        function renderGame() {
+            // Render Board
+            elements.gameBoard.innerHTML = '';
+            gameState.board.forEach((tile, index) => {
+                const domino = createDominoElement(tile, false, index, -1);
+                elements.gameBoard.appendChild(domino);
+            });
+
+            // Render Hands
+            const handElements = [
+                elements.playerHand,
+                elements.bot1Hand,
+                elements.bot2Hand,
+                elements.bot3Hand
+            ];
+
+            gameState.players.forEach((player, index) => {
+                const handEl = handElements[index];
+                handEl.innerHTML = '';
+                player.hand.forEach((tile, tileIndex) => {
+                    const domino = createDominoElement(tile, true, tileIndex, index);
+                    handEl.appendChild(domino);
+                });
+                handEl.style.display = 'flex';
+                elements.scoreDisplays[index].textContent = 
+                    `${index === 0 ? 'Player' : 'Bot'} ${index + 1} Score: ${gameState.scores[index]}`;
+            });
+
+            for (let i = gameState.players.length; i < 4; i++) {
+                handElements[i].style.display = 'none';
+            }
+
+            // Update Status
+            elements.statusBar.textContent = gameState.gameActive ?
+                `Player ${gameState.currentPlayer + 1}'s Turn` :
+                'Game Over - Select New Game';
             
-            playerCount.onchange = () => {
-                modeSelect.style.display = playerCount.value === '4' ? 'block' : 'none';
-            };
-            modal.style.display = 'block';
+            elements.drawButton.disabled = !gameState.gameActive || 
+                gameState.currentPlayer !== 0 || 
+                gameState.boneyard.length === 0;
         }
 
-        document.getElementById('board').addEventListener('dragover', (e) => e.preventDefault());
-        document.getElementById('board').addEventListener('drop', (e) => {
+        function canPlayTile(tile, side) {
+            if (gameState.board.length === 0) {
+                return tile[0] === tile[1];
+            }
+            const leftEnd = gameState.board[0][0];
+            const rightEnd = gameState.board[gameState.board.length - 1][1];
+            
+            if (side === 'left') {
+                return tile[0] === leftEnd || tile[1] === leftEnd;
+            }
+            return tile[0] === rightEnd || tile[1] === rightEnd;
+        }
+
+        function playTile(playerIndex, tileIndex, side) {
+            if (!gameState.gameActive || playerIndex !== gameState.currentPlayer) return;
+            
+            const tile = gameState.players[playerIndex].hand[tileIndex];
+            if (!canPlayTile(tile, side)) return;
+
+            // Adjust tile orientation
+            let playedTile = [...tile];
+            if (gameState.board.length > 0) {
+                if (side === 'left') {
+                    if (playedTile[1] !== gameState.board[0][0]) {
+                        playedTile = [playedTile[1], playedTile[0]];
+                    }
+                } else {
+                    if (playedTile[0] !== gameState.board[gameState.board.length - 1][1]) {
+                        playedTile = [playedTile[1], playedTile[0]];
+                    }
+                }
+            }
+
+            gameState.players[playerIndex].hand.splice(tileIndex, 1);
+            if (side === 'left') {
+                gameState.board.unshift(playedTile);
+            } else {
+                gameState.board.push(playedTile);
+            }
+
+            nextTurn();
+            checkGameEnd();
+            renderGame();
+        }
+
+        function drawTile() {
+            if (!gameState.gameActive || 
+                gameState.currentPlayer !== 0 || 
+                gameState.boneyard.length === 0) return;
+
+            const tile = gameState.boneyard.shift();
+            gameState.players[0].hand.push(tile);
+            nextTurn();
+            renderGame();
+        }
+
+        function botTurn() {
+            if (!gameState.gameActive || !gameState.players[gameState.currentPlayer].isBot) return;
+
+            const botHand = gameState.players[gameState.currentPlayer].hand;
+            let played = false;
+
+            for (let i = 0; i < botHand.length && !played; i++) {
+                const tile = botHand[i];
+                if (canPlayTile(tile, 'left')) {
+                    playTile(gameState.currentPlayer, i, 'left');
+                    played = true;
+                } else if (canPlayTile(tile, 'right')) {
+                    playTile(gameState.currentPlayer, i, 'right');
+                    played = true;
+                }
+            }
+
+            if (!played && gameState.boneyard.length > 0) {
+                const tile = gameState.boneyard.shift();
+                gameState.players[gameState.currentPlayer].hand.push(tile);
+                nextTurn();
+            } else if (!played) {
+                nextTurn();
+            }
+            renderGame();
+        }
+
+        function nextTurn() {
+            gameState.currentPlayer = (gameState.currentPlayer + 1) % gameState.players.length;
+            if (gameState.players[gameState.currentPlayer].isBot) {
+                setTimeout(botTurn, 1000);
+            }
+        }
+
+        function checkGameEnd() {
+            if (gameState.players[gameState.currentPlayer].hand.length === 0) {
+                calculateScores();
+                gameState.gameActive = false;
+                const winner = determineWinner();
+                elements.statusBar.textContent = `Game Over! Player ${winner + 1} Wins!`;
+            }
+        }
+
+        function calculateScores() {
+            gameState.players.forEach((player, index) => {
+                const handValue = player.hand.reduce((sum, tile) => sum + tile[0] + tile[1], 0);
+                if (gameState.gameMode === 'teams') {
+                    const team = player.team;
+                    gameState.scores[team] = (gameState.scores[team] || 0) + 
+                        (index === gameState.currentPlayer ? 0 : handValue);
+                } else {
+                    gameState.scores[index] = (gameState.scores[index] || 0) + 
+                        (index === gameState.currentPlayer ? 0 : handValue);
+                }
+            });
+        }
+
+        function determineWinner() {
+            if (gameState.gameMode === 'teams') {
+                return gameState.scores[0] > gameState.scores[1] ? 0 : 1;
+            }
+            let minScore = Infinity;
+            let winner = 0;
+            Object.entries(gameState.scores).forEach(([player, score]) => {
+                if (score < minScore) {
+                    minScore = score;
+                    winner = parseInt(player);
+                }
+            });
+            return winner;
+        }
+
+        // Event Handlers
+        function handleDragStart(e) {
+            if (gameState.currentPlayer !== 0) return;
+            e.dataTransfer.setData('text/plain', JSON.stringify({
+                index: e.target.dataset.index,
+                player: e.target.dataset.player
+            }));
+        }
+
+        function handleDragOver(e) {
             e.preventDefault();
-            const index = e.dataTransfer.getData('text/plain');
-            game.playTile(index, e.offsetX < document.getElementById('board').offsetWidth / 2 ? 'left' : 'right');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            if (gameState.currentPlayer !== 0) return;
+            
+            const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+            const side = e.offsetX < elements.gameBoard.offsetWidth / 2 ? 'left' : 'right';
+            playTile(parseInt(data.player), parseInt(data.index), side);
+        }
+
+        // Modal Controls
+        function showSetupModal() {
+            elements.setupModal.style.display = 'flex';
+            elements.playerCountSelect.onchange = () => {
+                elements.modeSection.style.display = 
+                    elements.playerCountSelect.value === '4' ? 'block' : 'none';
+            };
+        }
+
+        function hideSetupModal() {
+            elements.setupModal.style.display = 'none';
+        }
+
+        function showRulesModal() {
+            elements.rulesModal.style.display = 'flex';
+        }
+
+        function hideRulesModal() {
+            elements.rulesModal.style.display = 'none';
+        }
+
+        // Event Listeners
+        elements.newGameButton.addEventListener('click', showSetupModal);
+        elements.startGameButton.addEventListener('click', () => {
+            const playerCount = parseInt(elements.playerCountSelect.value);
+            const mode = playerCount === 4 ? elements.gameModeSelect.value : 'ffa';
+            initializeGame(playerCount, mode);
+            hideSetupModal();
         });
+
+        elements.drawButton.addEventListener('click', drawTile);
+        elements.rulesButton.addEventListener('click', showRulesModal);
+        elements.closeRulesButton.addEventListener('click', hideRulesModal);
+
+        elements.gameBoard.addEventListener('dragover', handleDragOver);
+        elements.gameBoard.addEventListener('drop', handleDrop);
+
+        // Initial Setup
+        elements.setupModal.style.display = 'flex';
     </script>
 </body>
 </html>
