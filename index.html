@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Domino Game - Huawei Nova 7i</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #2ecc71;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 10px;
+            max-width: 1080px; /* Nova 7i width */
+            margin: 0 auto;
+            font-size: 16px; /* Base font size for ~398ppi */
+        }
+
+        .game-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .board {
+            background: #ecf0f1;
+            border-radius: 8px;
+            padding: 8px;
+            min-height: 300px; /* Adjusted for 2310px height */
+            overflow-x: auto;
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .player-hand, .bot-hand {
+            background: #fff;
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            gap: 4px;
+            overflow-x: auto;
+            max-height: 150px;
+        }
+
+        .domino {
+            width: 54px;  /* Optimized for Nova 7i */
+            height: 108px;
+            background: #fff;
+            border: 2px solid #2c3e50;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 4px;
+            cursor: move;
+            user-select: none;
+        }
+
+        .domino-half {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .dots {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #2c3e50;
+            border-radius: 50%;
+        }
+
+        .status {
+            background: #3498db;
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            padding: 8px 0;
+        }
+
+        button {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            background: #e74c3c;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="status" id="status">Player's Turn</div>
+        <div class="board" id="board"></div>
+        <div class="player-hand" id="playerHand"></div>
+        <div class="bot-hand" id="botHand"></div>
+        <div class="controls">
+            <button onclick="game.drawTile()">Draw Tile</button>
+            <button onclick="game.newGame()">New Game</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+
+    <script>
+        // Your Firebase configuration
+        const firebaseConfig = {
+            // Replace with your Firebase config object
+           
+  apiKey: "AIzaSyBazU0aKcpX7sxhPrcyYQYryRrYW1i0rdk",
+  authDomain: "sample-firebase-ai-f5447.firebaseapp.com",
+  projectId: "sample-firebase-ai-f5447",
+  storageBucket: "sample-firebase-ai-f5447.firebasestorage.app",
+  messagingSenderId: "718125971250",
+  appId: "1:718125971250:web:438339203c5657ddfc492b"
+};
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        class DominoGame {
+            constructor() {
+                this.gameRef = db.ref('game');
+                this.initGame();
+            }
+
+            async initGame() {
+                const tiles = this.generateTiles();
+                this.shuffle(tiles);
+                const initialState = {
+                    playerHand: tiles.slice(0, 7),
+                    botHand: tiles.slice(7, 14),
+                    boneyard: tiles.slice(14),
+                    board: [],
+                    playerTurn: true
+                };
+
+                await this.gameRef.set(initialState);
+                this.listenToGameState();
+                this.render();
+            }
+
+            generateTiles() {
+                const tiles = [];
+                for (let i = 0; i <= 6; i++) {
+                    for (let j = i; j <= 6; j++) {
+                        tiles.push([i, j]);
+                    }
+                }
+                return tiles;
+            }
+
+            shuffle(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+
+            listenToGameState() {
+                this.gameRef.on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        this.playerHand = data.playerHand;
+                        this.botHand = data.botHand;
+                        this.board = data.board;
+                        this.playerTurn = data.playerTurn;
+                        this.boneyard = data.boneyard;
+                        this.render();
+                    }
+                });
+            }
+
+            render() {
+                this.renderHand(this.playerHand, 'playerHand', true);
+                this.renderHand(this.botHand, 'botHand', false);
+                this.renderBoard();
+                document.getElementById('status').textContent = 
+                    this.playerTurn ? "Player's Turn" : "Bot's Turn";
+            }
+
+            renderHand(hand, elementId, draggable) {
+                const container = document.getElementById(elementId);
+                container.innerHTML = '';
+                hand.forEach((tile, index) => {
+                    const domino = this.createDominoElement(tile, draggable, index);
+                    container.appendChild(domino);
+                });
+            }
+
+            renderBoard() {
+                const board = document.getElementById('board');
+                board.innerHTML = '';
+                this.board.forEach(tile => {
+                    const domino = this.createDominoElement(tile, false);
+                    board.appendChild(domino);
+                });
+            }
+
+            createDominoElement(tile, draggable, index) {
+                const domino = document.createElement('div');
+                domino.className = 'domino';
+                if (draggable) {
+                    domino.draggable = true;
+                    domino.dataset.index = index;
+                    domino.addEventListener('dragstart', (e) => this.handleDragStart(e));
+                }
+                
+                const top = this.createHalf(tile[0]);
+                const bottom = this.createHalf(tile[1]);
+                domino.appendChild(top);
+                domino.appendChild(bottom.createElement('div', {className: 'divider'}));
+                domino.appendChild(bottom);
+                return domino;
+            }
+
+            createHalf(num) {
+                const half = document.createElement('div');
+                half.className = 'domino-half';
+                const dots = document.createElement('div');
+                dots.className = 'dots';
+                for (let i = 0; i < num; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'dot';
+                    dots.appendChild(dot);
+                }
+                half.appendChild(dots);
+                return half;
+            }
+
+            handleDragStart(e) {
+                const index = e.target.dataset.index;
+                e.dataTransfer.setData('text/plain', index);
+            }
+
+            async playTile(index) {
+                if (!this.playerTurn) return;
+                const tile = this.playerHand[index];
+                const canPlay = this.board.length === 0 || 
+                    this.board[0][0] === tile[1] || 
+                    this.board[this.board.length-1][1] === tile[0];
+
+                if (canPlay) {
+                    await this.gameRef.update({
+                        playerHand: this.playerHand.filter((_, i) => i !== parseInt(index)),
+                        board: [...this.board, tile],
+                        playerTurn: false
+                    });
+                    this.botPlay();
+                }
+            }
+
+            async botPlay() {
+                setTimeout(async () => {
+                    const playableTile = this.botHand.findIndex(tile => 
+                        this.board.length === 0 || 
+                        this.board[0][0] === tile[1] || 
+                        this.board[this.board.length-1][1] === tile[0]
+                    );
+
+                    if (playableTile !== -1) {
+                        const tile = this.botHand[playableTile];
+                        await this.gameRef.update({
+                            botHand: this.botHand.filter((_, i) => i !== playableTile),
+                            board: [...this.board, tile],
+                            playerTurn: true
+                        });
+                    } else {
+                        await this.gameRef.update({ playerTurn: true });
+                    }
+                }, 1000);
+            }
+
+            async drawTile() {
+                if (!this.playerTurn || this.boneyard.length === 0) return;
+                const tile = this.boneyard[0];
+                await this.gameRef.update({
+                    playerHand: [...this.playerHand, tile],
+                    boneyard: this.boneyard.slice(1),
+                    playerTurn: false
+                });
+                this.botPlay();
+            }
+
+            async newGame() {
+                await this.initGame();
+            }
+        }
+
+        const game = new DominoGame();
+
+        document.getElementById('board').addEventListener('dragover', (e) => e.preventDefault());
+        document.getElementById('board').addEventListener('drop', (e) => {
+            e.preventDefault();
+            const index = e.dataTransfer.getData('text/plain');
+            game.playTile(index);
+        });
+    </script>
+</body>
+</html>
