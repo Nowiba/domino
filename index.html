@@ -28,7 +28,6 @@
             max-width: 1080px;
             margin: 0 auto;
             color: var(--text);
-            overflow-x: hidden;
         }
 
         .game-wrapper {
@@ -50,15 +49,9 @@
             border-radius: 15px;
         }
 
-        .status {
-            font-size: 20px;
+        .status, .stats {
+            font-size: 18px;
             font-weight: 600;
-            letter-spacing: 1px;
-        }
-
-        .stats {
-            font-size: 14px;
-            opacity: 0.8;
         }
 
         .board {
@@ -71,7 +64,6 @@
             overflow-x: auto;
             align-items: center;
             box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
-            position: relative;
         }
 
         .player-hand {
@@ -101,7 +93,6 @@
             box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.3);
             cursor: grab;
             transition: all 0.2s ease;
-            position: relative;
         }
 
         .domino:hover {
@@ -145,7 +136,6 @@
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 15px;
-            padding: 20px 0;
         }
 
         .btn {
@@ -158,14 +148,11 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         .btn:hover {
             background: #c7324d;
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(233, 69, 96, 0.3);
         }
 
         .modal {
@@ -203,7 +190,6 @@
         }
 
         .modal-label {
-            display: block;
             font-size: 18px;
             margin-bottom: 10px;
             font-weight: 500;
@@ -217,19 +203,6 @@
             background: rgba(255, 255, 255, 0.1);
             color: var(--text);
             font-size: 16px;
-            cursor: pointer;
-        }
-
-        .modal-select option {
-            background: var(--secondary);
-        }
-
-        .score-bar {
-            font-size: 16px;
-            padding: 10px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            margin-top: 15px;
         }
     </style>
 </head>
@@ -242,12 +215,11 @@
         <div class="board" id="gameBoard"></div>
         <div class="player-hand" id="playerHand"></div>
         <div class="controls">
-            <button class="btn" id="drawBtn">Draw Tile</button>
-            <button class="btn" id="passBtn">Pass Turn</button>
+            <button class="btn" id="drawBtn">Draw</button>
+            <button class="btn" id="passBtn">Pass</button>
             <button class="btn" id="newGameBtn">New Game</button>
             <button class="btn" id="rulesBtn">Rules</button>
         </div>
-        <div class="score-bar" id="scoreBar">Player 1: 0 | Bot Scores: 0-0-0</div>
     </div>
 
     <div class="modal" id="setupModal">
@@ -274,16 +246,14 @@
 
     <div class="modal" id="rulesModal">
         <div class="modal-box">
-            <div class="modal-title">Game Rules</div>
+            <div class="modal-title">Rules</div>
             <div class="modal-section">
-                <p>1. Game begins with highest double</p>
-                <p>2. Match tile ends with same number</p>
-                <p>3. Draw from boneyard if stuck</p>
-                <p>4. Pass if no moves available</p>
-                <p>5. Win by playing all tiles</p>
-                <p>6. Score from opponents' remaining tiles</p>
-                <p>7. Teams combine scores in 2v2</p>
-                <p>8. First to 100 points wins</p>
+                <p>- Starts with highest double</p>
+                <p>- Match numbers on either end</p>
+                <p>- Draw if no playable tiles</p>
+                <p>- Pass if unable to play</p>
+                <p>- Win by emptying hand</p>
+                <p>- Score from opponents' tiles</p>
             </div>
             <button class="btn" id="closeRulesBtn">Close</button>
         </div>
@@ -295,31 +265,31 @@
     <script>
         // Firebase Setup
         const firebaseConfig = {
-  apiKey: "AIzaSyBazU0aKcpX7sxhPrcyYQYryRrYW1i0rdk",
-  authDomain: "sample-firebase-ai-f5447.firebaseapp.com",
-  projectId: "sample-firebase-ai-f5447",
-  storageBucket: "sample-firebase-ai-f5447.firebasestorage.app",
-  messagingSenderId: "718125971250",
-  appId: "1:718125971250:web:438339203c5657ddfc492b"
-};
+            apiKey: "AIzaSyBazU0aKcpX7sxhPrcyYQYryRrYW1i0rdk",
+            authDomain: "sample-firebase-ai-f5447.firebaseapp.com",
+            projectId: "sample-firebase-ai-f5447",
+            storageBucket: "sample-firebase-ai-f5447.firebasestorage.app",
+            messagingSenderId: "718125971250",
+            appId: "1:718125971250:web:438339203c5657ddfc492b"
+        };
+
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const gameRef = db.ref('game');
 
         // Game State
-        const game = {
+        let gameState = {
             players: [],
             board: [],
             boneyard: [],
             currentPlayer: 0,
-            mode: 'ffa',
+            gameMode: 'ffa',
             scores: {},
-            active: false,
-            target: 100
+            isActive: false
         };
 
         // DOM Elements
-        const els = {
+        const elements = {
             status: document.getElementById('gameStatus'),
             stats: document.getElementById('gameStats'),
             board: document.getElementById('gameBoard'),
@@ -328,7 +298,6 @@
             passBtn: document.getElementById('passBtn'),
             newGameBtn: document.getElementById('newGameBtn'),
             rulesBtn: document.getElementById('rulesBtn'),
-            scoreBar: document.getElementById('scoreBar'),
             setupModal: document.getElementById('setupModal'),
             playerCount: document.getElementById('playerCount'),
             modeSection: document.getElementById('modeSection'),
@@ -338,8 +307,8 @@
             closeRulesBtn: document.getElementById('closeRulesBtn')
         };
 
-        // Game Logic
-        function createTiles() {
+        // Game Functions
+        function generateTiles() {
             const tiles = [];
             for (let i = 0; i <= 6; i++) {
                 for (let j = i; j <= 6; j++) {
@@ -357,16 +326,15 @@
             return array;
         }
 
-        function renderDomino(tile, draggable, index, playerIdx) {
+        function createDomino(tile, isDraggable, index, playerIndex) {
             const domino = document.createElement('div');
             domino.className = 'domino';
             domino.dataset.tile = JSON.stringify(tile);
             domino.dataset.index = index;
-            domino.dataset.player = playerIdx;
+            domino.dataset.player = playerIndex;
 
-            if (draggable && playerIdx === 0) {
+            if (isDraggable && playerIndex === 0 && gameState.isActive) {
                 domino.draggable = true;
-                domino.addEventListener('dragstart', dragStart);
             }
 
             const pipPatterns = {
@@ -386,7 +354,7 @@
                     const pip = document.createElement('div');
                     pip.className = 'pip';
                     pip.style.gridColumn = x + 1;
- uplift                   pip.style.gridRow = y + 1;
+                    pip.style.gridRow = y + 1;
                     half.appendChild(pip);
                 });
                 domino.appendChild(half);
@@ -395,179 +363,193 @@
             return domino;
         }
 
-        async function startGame(playerCount, mode) {
-            const tiles = shuffle(createTiles());
-            game.players = [];
-            game.scores = {};
-            game.mode = mode;
-            game.active = true;
+        async function initializeGame(playerCount, mode) {
+            const tiles = shuffle(generateTiles());
+            gameState.players = [];
+            gameState.scores = {};
+            gameState.gameMode = mode;
+            gameState.isActive = true;
 
             for (let i = 0; i < playerCount; i++) {
-                game.players.push({
+                gameState.players.push({
                     hand: tiles.splice(0, 7),
                     isBot: i !== 0,
                     team: mode === 'teams' ? (i < 2 ? 0 : 1) : i
                 });
-                game.scores[i] = 0;
+                gameState.scores[i] = 0;
             }
 
-            const state = {
-                players: game.players,
-                board: [],
-                boneyard: tiles,
-                currentPlayer: findFirstPlayer(),
-                mode: mode,
-                scores: game.scores,
-                active: true
-            };
+            gameState.boneyard = tiles;
+            gameState.board = [];
+            gameState.currentPlayer = findStartingPlayer();
 
-            await gameRef.set(state);
+            await gameRef.set(gameState);
+            renderGame();
         }
 
-        function findFirstPlayer() {
-            let maxDouble = -1;
-            let first = 0;
-            game.players.forEach((p, i) => {
-                p.hand.forEach(t => {
-                    if (t[0] === t[1] && t[0] > maxDouble) {
-                        maxDouble = t[0];
-                        first = i;
+        function findStartingPlayer() {
+            let highestDouble = -1;
+            let starter = 0;
+            gameState.players.forEach((player, index) => {
+                player.hand.forEach(tile => {
+                    if (tile[0] === tile[1] && tile[0] > highestDouble) {
+                        highestDouble = tile[0];
+                        starter = index;
                     }
                 });
             });
-            return first;
+            return starter;
         }
 
-        function syncGame() {
-            gameRef.on('value', snapshot => {
+        function listenGameState() {
+            gameRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
-                    Object.assign(game, data);
-                    render();
-                    if (game.active && game.players[game.currentPlayer].isBot) {
-                        setTimeout(botMove, 1500);
+                    gameState = data;
+                    renderGame();
+                    if (gameState.isActive && gameState.players[gameState.currentPlayer].isBot) {
+                        setTimeout(botPlay, 1000);
                     }
                 }
             });
         }
 
-        function render() {
-            els.board.innerHTML = '';
-            game.board.forEach((t, i) => {
-                els.board.appendChild(renderDomino(t, false, i, -1));
+        function renderGame() {
+            elements.board.innerHTML = '';
+            gameState.board.forEach((tile, index) => {
+                const domino = createDomino(tile, false, index, -1);
+                elements.board.appendChild(domino);
             });
 
-            els.hand.innerHTML = '';
-            game.players[0].hand.forEach((t, i) => {
-                els.hand.appendChild(renderDomino(t, true, i, 0));
+            elements.hand.innerHTML = '';
+            gameState.players[0].hand.forEach((tile, index) => {
+                const domino = createDomino(tile, true, index, 0);
+                domino.addEventListener('dragstart', dragStart);
+                elements.hand.appendChild(domino);
             });
 
-            els.status.textContent = game.active ? 
-                `Player ${game.currentPlayer + 1}'s Turn` : 
+            elements.status.textContent = gameState.isActive ?
+                `Player ${gameState.currentPlayer + 1}'s Turn` :
                 'Game Over';
             
-            const botHands = game.players.slice(1).map(p => p.hand.length).join('-');
-            els.stats.textContent = `Score: ${game.scores[0]} | Opponents: ${botHands}`;
-            els.scoreBar.textContent = `Player 1: ${game.scores[0]} | Bot Scores: ${Object.values(game.scores).slice(1).join('-')}`;
-
-            els.drawBtn.disabled = !game.active || game.currentPlayer !== 0 || game.boneyard.length === 0;
-            els.passBtn.disabled = !game.active || game.currentPlayer !== 0;
+            const botHands = gameState.players.slice(1).map(p => p.hand.length).join('-');
+            elements.stats.textContent = `Score: ${gameState.scores[0]} | Opponents: ${botHands || '0'}`;
         }
 
-        async function playTile(playerIdx, tileIdx, side) {
-            if (!game.active || playerIdx !== game.currentPlayer) return;
-            const tile = game.players[playerIdx].hand[tileIdx];
-            if (!canPlay(tile, side)) return;
+        async function playTile(playerIndex, tileIndex, side) {
+            if (!gameState.isActive || playerIndex !== gameState.currentPlayer) return;
+            
+            const tile = gameState.players[playerIndex].hand[tileIndex];
+            if (!canPlayTile(tile, side)) return;
 
-            let played = [...tile];
-            if (game.board.length) {
+            let playedTile = [...tile];
+            if (gameState.board.length > 0) {
                 if (side === 'left') {
-                    if (played[1] !== game.board[0][0]) played = [played[1], played[0]];
+                    if (playedTile[1] !== gameState.board[0][0]) {
+                        playedTile = [playedTile[1], playedTile[0]];
+                    }
                 } else {
-                    if (played[0] !== game.board[game.board.length - 1][1]) played = [played[1], played[0]];
+                    if (playedTile[0] !== gameState.board[gameState.board.length - 1][1]) {
+                        playedTile = [playedTile[1], playedTile[0]];
+                    }
                 }
             }
 
-            const newPlayers = [...game.players];
-            newPlayers[playerIdx].hand.splice(tileIdx, 1);
-            const newBoard = side === 'left' ? [played, ...game.board] : [...game.board, played];
-            await updateState({ players: newPlayers, board: newBoard });
-        }
-
-        async function draw() {
-            if (!game.active || game.currentPlayer !== 0 || game.boneyard.length === 0) return;
-            const newPlayers = [...game.players];
-            newPlayers[0].hand.push(game.boneyard[0]);
-            const newBoneyard = game.boneyard.slice(1);
-            await updateState({ players: newPlayers, boneyard: newBoneyard });
-        }
-
-        async function pass() {
-            if (!game.active || game.currentPlayer !== 0) return;
-            await nextPlayer();
-        }
-
-        async function botMove() {
-            if (!game.active || !game.players[game.currentPlayer].isBot) return;
-            const hand = game.players[game.currentPlayer].hand;
-
-            for (let i = 0; i < hand.length; i++) {
-                if (canPlay(hand[i], 'left')) return await playTile(game.currentPlayer, i, 'left');
-                if (canPlay(hand[i], 'right')) return await playTile(game.currentPlayer, i, 'right');
-            }
-
-            if (game.boneyard.length) {
-                const newPlayers = [...game.players];
-                newPlayers[game.currentPlayer].hand.push(game.boneyard[0]);
-                const newBoneyard = game.boneyard.slice(1);
-                await updateState({ players: newPlayers, boneyard: newBoneyard });
+            gameState.players[playerIndex].hand.splice(tileIndex, 1);
+            if (side === 'left') {
+                gameState.board.unshift(playedTile);
             } else {
-                await nextPlayer();
+                gameState.board.push(playedTile);
+            }
+
+            await nextTurn();
+            checkGameEnd();
+            await gameRef.set(gameState);
+        }
+
+        async function drawTile() {
+            if (!gameState.isActive || gameState.currentPlayer !== 0 || gameState.boneyard.length === 0) return;
+            
+            gameState.players[0].hand.push(gameState.boneyard.shift());
+            await nextTurn();
+            await gameRef.set(gameState);
+        }
+
+        async function passTurn() {
+            if (!gameState.isActive || gameState.currentPlayer !== 0) return;
+            await nextTurn();
+            await gameRef.set(gameState);
+        }
+
+        async function botPlay() {
+            if (!gameState.isActive || !gameState.players[gameState.currentPlayer].isBot) return;
+            
+            const hand = gameState.players[gameState.currentPlayer].hand;
+            let played = false;
+
+            for (let i = 0; i < hand.length && !played; i++) {
+                if (canPlayTile(hand[i], 'left')) {
+                    await playTile(gameState.currentPlayer, i, 'left');
+                    played = true;
+                } else if (canPlayTile(hand[i], 'right')) {
+                    await playTile(gameState.currentPlayer, i, 'right');
+                    played = true;
+                }
+            }
+
+            if (!played && gameState.boneyard.length > 0) {
+                gameState.players[gameState.currentPlayer].hand.push(gameState.boneyard.shift());
+                await nextTurn();
+                await gameRef.set(gameState);
+            } else if (!played) {
+                await nextTurn();
+                await gameRef.set(gameState);
             }
         }
 
-        async function nextPlayer() {
-            const next = (game.currentPlayer + 1) % game.players.length;
-            await updateState({ currentPlayer: next });
+        async function nextTurn() {
+            gameState.currentPlayer = (gameState.currentPlayer + 1) % gameState.players.length;
         }
 
-        async function updateState(changes) {
-            const newState = { ...game, ...changes };
-            if (newState.players[newState.currentPlayer].hand.length === 0) {
-                calculateScores(newState);
-                newState.active = false;
+        function checkGameEnd() {
+            if (gameState.players[gameState.currentPlayer].hand.length === 0) {
+                calculateScores();
+                gameState.isActive = false;
+                elements.status.textContent = `Player ${gameState.currentPlayer + 1} Wins!`;
             }
-            await gameRef.set(newState);
         }
 
-        function canPlay(tile, side) {
-            if (!game.board.length) return tile[0] === tile[1];
-            const left = game.board[0][0];
-            const right = game.board[game.board.length - 1][1];
-            return side === 'left' ? 
-                (tile[0] === left || tile[1] === left) : 
-                (tile[0] === right || tile[1] === right);
-        }
-
-        function calculateScores(state) {
-            state.players.forEach((p, i) => {
-                const value = p.hand.reduce((sum, t) => sum + t[0] + t[1], 0);
-                if (state.mode === 'teams') {
-                    const team = p.team;
-                    state.scores[team] = (state.scores[team] || 0) + (i === state.currentPlayer ? 0 : value);
+        function calculateScores() {
+            gameState.players.forEach((player, index) => {
+                const handValue = player.hand.reduce((sum, tile) => sum + tile[0] + tile[1], 0);
+                if (gameState.gameMode === 'teams') {
+                    const team = player.team;
+                    gameState.scores[team] = (gameState.scores[team] || 0) + 
+                        (index === gameState.currentPlayer ? 0 : handValue);
                 } else {
-                    state.scores[i] = (state.scores[i] || 0) + (i === state.currentPlayer ? 0 : value);
+                    gameState.scores[index] = (gameState.scores[index] || 0) + 
+                        (index === gameState.currentPlayer ? 0 : handValue);
                 }
             });
+        }
+
+        function canPlayTile(tile, side) {
+            if (gameState.board.length === 0) return tile[0] === tile[1];
+            const leftEnd = gameState.board[0][0];
+            const rightEnd = gameState.board[gameState.board.length - 1][1];
+            return side === 'left' ? 
+                (tile[0] === leftEnd || tile[1] === leftEnd) : 
+                (tile[0] === rightEnd || tile[1] === rightEnd);
         }
 
         // Event Handlers
         function dragStart(e) {
-            if (game.currentPlayer !== 0) return;
-            e.dataTransfer.setData('text/plain', JSON.stringify({
+            if (gameState.currentPlayer !== 0 || !gameState.isActive) return;
+            const data = {
                 index: e.target.dataset.index,
                 player: e.target.dataset.player
-            }));
+            };
+            e.dataTransfer.setData('text/plain', JSON.stringify(data));
         }
 
         function dragOver(e) {
@@ -576,51 +558,53 @@
 
         function drop(e) {
             e.preventDefault();
-            if (game.currentPlayer !== 0) return;
+            if (gameState.currentPlayer !== 0 || !gameState.isActive) return;
             const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-            const side = e.offsetX < els.board.offsetWidth / 2 ? 'left' : 'right';
+            const side = e.offsetX < elements.board.offsetWidth / 2 ? 'left' : 'right';
             playTile(parseInt(data.player), parseInt(data.index), side);
         }
 
-        // Modal Controls
-        function showSetup() {
-            els.setupModal.style.display = 'flex';
-            els.playerCount.onchange = () => {
-                els.modeSection.style.display = els.playerCount.value === '4' ? 'block' : 'none';
-            };
+        // Modal Functions
+        function showSetupModal() {
+            elements.setupModal.style.display = 'flex';
+            elements.playerCount.addEventListener('change', () => {
+                elements.modeSection.style.display = 
+                    elements.playerCount.value === '4' ? 'block' : 'none';
+            });
         }
 
-        function hideSetup() {
-            els.setupModal.style.display = 'none';
+        function hideSetupModal() {
+            elements.setupModal.style.display = 'none';
         }
 
-        function showRules() {
-            els.rulesModal.style.display = 'flex';
+        function showRulesModal() {
+            elements.rulesModal.style.display = 'flex';
         }
 
-        function hideRules() {
-            els.rulesModal.style.display = 'none';
+        function hideRulesModal() {
+            elements.rulesModal.style.display = 'none';
         }
 
         // Event Listeners
-        els.newGameBtn.addEventListener('click', showSetup);
-        els.startBtn.addEventListener('click', async () => {
-            await startGame(parseInt(els.playerCount.value), 
-                els.playerCount.value === '4' ? els.gameMode.value : 'ffa');
-            hideSetup();
-        });
+        elements.newGameBtn.onclick = () => showSetupModal();
+        elements.startBtn.onclick = async () => {
+            const playerCount = parseInt(elements.playerCount.value);
+            const mode = playerCount === 4 ? elements.gameMode.value : 'ffa';
+            await initializeGame(playerCount, mode);
+            hideSetupModal();
+        };
 
-        els.drawBtn.addEventListener('click', draw);
-        els.passBtn.addEventListener('click', pass);
-        els.rulesBtn.addEventListener('click', showRules);
-        els.closeRulesBtn.addEventListener('click', hideRules);
+        elements.drawBtn.onclick = drawTile;
+        elements.passBtn.onclick = passTurn;
+        elements.rulesBtn.onclick = showRulesModal;
+        elements.closeRulesBtn.onclick = hideRulesModal;
 
-        els.board.addEventListener('dragover', dragOver);
-        els.board.addEventListener('drop', drop);
+        elements.board.addEventListener('dragover', dragOver);
+        elements.board.addEventListener('drop', drop);
 
-        // Start
-        syncGame();
-        showSetup();
+        // Initialize
+        listenGameState();
+        showSetupModal();
     </script>
 </body>
 </html>
