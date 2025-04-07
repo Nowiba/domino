@@ -257,7 +257,7 @@
             color: #4a6fa5;
         }
 
-        input[type="text"], select {
+        select {
             width: 100%;
             padding: 10px;
             margin: 10px 0;
@@ -420,7 +420,7 @@
 
         <div class="connection-status" id="connectionStatus">Connected</div>
 
-        <!-- Lobby Screen (initially hidden) -->
+        <!-- Lobby Screen -->
         <div id="lobbyScreen" class="lobby" style="display: none;">
             <h2>Game Lobby</h2>
             <div class="player-list">
@@ -439,7 +439,7 @@
             </div>
         </div>
 
-        <!-- Game Screen (initially hidden) -->
+        <!-- Game Screen -->
         <div id="gameScreen" style="display: none;">
             <div class="game-status" id="gameStatus">Waiting for players...</div>
             
@@ -468,7 +468,7 @@
             </div>
         </div>
 
-        <!-- Game Over Screen (initially hidden) -->
+        <!-- Game Over Screen -->
         <div id="gameOverScreen" style="display: none;">
             <div class="end-screen">
                 <h2>Game Over!</h2>
@@ -477,15 +477,6 @@
                 <button id="playAgainBtn">Play Again</button>
                 <button id="returnToLobbyBtn">Return to Lobby</button>
             </div>
-        </div>
-    </div>
-
-    <!-- Name Modal (shown first) -->
-    <div class="modal active" id="nameModal">
-        <div class="modal-content">
-            <h2>Enter Your Name</h2>
-            <input type="text" id="playerNameInput" placeholder="Your name" maxlength="20">
-            <button id="confirmNameBtn">Confirm</button>
         </div>
     </div>
 
@@ -555,9 +546,6 @@
         const chatInput = document.getElementById('chatInput');
         const sendChatBtn = document.getElementById('sendChatBtn');
         const connectionStatus = document.getElementById('connectionStatus');
-        const nameModal = document.getElementById('nameModal');
-        const playerNameInput = document.getElementById('playerNameInput');
-        const confirmNameBtn = document.getElementById('confirmNameBtn');
         const gameCreationModal = document.getElementById('gameCreationModal');
         const confirmCreateGameBtn = document.getElementById('confirmCreateGameBtn');
         const cancelCreateGameBtn = document.getElementById('cancelCreateGameBtn');
@@ -588,8 +576,9 @@
 
         // Initialize the game
         function init() {
-            // Generate player ID
+            // Generate player ID and random name
             playerId = generateId();
+            playerName = generateRandomName();
             
             // Set up Firebase connection state listener
             connectionRef = firebase.database().ref('.info/connected');
@@ -609,8 +598,10 @@
             playersRef = database.ref('players');
             gamesRef = database.ref('games');
             
+            // Initialize player immediately
+            initializePlayer();
+            
             // Event listeners
-            confirmNameBtn.addEventListener('click', confirmName);
             createGameBtn.addEventListener('click', () => showModal(gameCreationModal));
             joinRandomBtn.addEventListener('click', joinRandomGame);
             confirmCreateGameBtn.addEventListener('click', createGame);
@@ -666,6 +657,15 @@
             });
         }
 
+        // Generate a random player name
+        function generateRandomName() {
+            const adjectives = ['Happy', 'Clever', 'Swift', 'Brave', 'Gentle', 'Jolly', 'Mighty', 'Peaceful', 'Radiant', 'Silly'];
+            const nouns = ['Player', 'Champion', 'Domino', 'Master', 'Legend', 'Warrior', 'Hero', 'Star', 'Wizard', 'Ninja'];
+            const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
+            const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+            return `${randomAdj} ${randomNoun} ${Math.floor(Math.random() * 100)}`;
+        }
+
         // Show modal
         function showModal(modal) {
             modal.classList.add('active');
@@ -674,20 +674,6 @@
         // Hide modal
         function hideModal(modal) {
             modal.classList.remove('active');
-        }
-
-        // Confirm name from modal
-        function confirmName() {
-            const name = playerNameInput.value.trim();
-            if (name.length < 2 || name.length > 20) {
-                alert('Name must be between 2 and 20 characters');
-                return;
-            }
-            
-            playerName = name;
-            localStorage.setItem('dominoPlayerName', name);
-            hideModal(nameModal);
-            initializePlayer();
         }
 
         // Initialize player in Firebase
@@ -700,18 +686,34 @@
                 status: 'online',
                 gameId: '',
                 lastActive: firebase.database.ServerValue.TIMESTAMP
+            })
+            .then(() => {
+                // Set up player presence
+                playerRef.onDisconnect().update({
+                    status: 'offline',
+                    lastActive: firebase.database.ServerValue.TIMESTAMP
+                });
+                
+                // Show lobby screen
+                lobbyScreen.style.display = 'block';
+                
+                // Listen for online players
+                setupPlayersListener();
+                
+                // Listen for available games
+                setupGamesListener();
+                
+                hideLoading();
+            })
+            .catch(error => {
+                console.error('Error initializing player:', error);
+                hideLoading();
+                alert('Failed to connect. Please refresh the page.');
             });
-            
-            // Set up player presence
-            playerRef.onDisconnect().update({
-                status: 'offline',
-                lastActive: firebase.database.ServerValue.TIMESTAMP
-            });
-            
-            // Show lobby screen
-            lobbyScreen.style.display = 'block';
-            
-            // Listen for online players
+        }
+
+        // Set up players listener
+        function setupPlayersListener() {
             playersRef.orderByChild('status').equalTo('online').on('value', (snapshot) => {
                 onlinePlayers.innerHTML = '';
                 const players = snapshot.val() || {};
@@ -729,8 +731,10 @@
                     onlinePlayers.appendChild(playerEl);
                 });
             });
-            
-            // Listen for available games
+        }
+
+        // Set up games listener
+        function setupGamesListener() {
             gamesRef.orderByChild('status').equalTo('waiting').on('value', (snapshot) => {
                 availableGames.innerHTML = '';
                 const games = snapshot.val() || {};
@@ -756,8 +760,6 @@
                     });
                 });
             });
-            
-            hideLoading();
         }
 
         // Create a new game
@@ -1233,8 +1235,8 @@
             }
             
             // Determine next player
-            const nextPlayerIndex = (gameState.players.findIndex(p => p.id === gameState.currentPlayer) + 1) % gameState.players.length;
-            const nextPlayer = gameState.players[nextPlayerIndex];
+            const nextPlayerIndex = (gameState.players.findIndex(p => p.id === gameState.currentPlayer) + 1;
+            const nextPlayer = gameState.players[nextPlayerIndex % gameState.players.length];
             
             // Check for game over (player has no dominoes left)
             if (updatedPlayers[playerIndex].dominoes.length === 0) {
@@ -1311,7 +1313,7 @@
             showLoading('Passing', 'Passing your turn...');
             
             // Determine next player
-            const nextPlayerIndex = (gameState.players.findIndex(p => p.id === gameState.currentPlayer) + 1;
+            const nextPlayerIndex = (gameState.players.findIndex(p => p.id === gameState.currentPlayer) + 1);
             const nextPlayer = gameState.players[nextPlayerIndex % gameState.players.length];
             
             // Update game state
