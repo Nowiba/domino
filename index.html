@@ -241,29 +241,1637 @@
             nextTurn();
         }
 
-        function nextTurn() {
-            gameState.turn = gameState.turn === playerId 
-                ? (gameState.gameMode === 'multiplayer' ? Object.keys(gameState.players).find(p => p !== playerId) : 'bot')
-                : playerId;
-
-            if (gameState.gameMode === 'multiplayer') {
-                gameRef.update({ turn: gameState.turn });
-            }
-            renderGame();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Multiplayer Domino Game</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        // Event Listeners
-        document.body.addEventListener('click', (e) => {
-            if (e.target.classList.contains('domino') && gameState.turn === playerId) {
-                const dominoId = e.target.getAttribute('data-id');
-                const domino = gameState.players[playerId]?.hand.find(d => d.id === dominoId);
+        body {
+            background-color: #f0f2f5;
+            color: #333;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
 
-                if (domino) {
-                    const position = confirm('Place left or right? (OK=Left, Cancel=Right)');
-                    placeDomino(domino, position ? 'left' : 'right');
+        #app {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 10px;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            padding: 10px 0;
+            background-color: #4a6fa5;
+            color: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .board {
+            background-color: #e8f4f8;
+            border-radius: 8px;
+            padding: 10px;
+            min-height: 120px;
+            position: relative;
+            overflow-x: auto;
+            white-space: nowrap;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+        }
+
+        .domino-chain {
+            display: inline-flex;
+            align-items: center;
+            min-height: 100px;
+            padding: 5px 0;
+        }
+
+        .domino {
+            width: 40px;
+            height: 80px;
+            background-color: white;
+            border-radius: 5px;
+            margin: 0 -10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.2);
+            position: relative;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+            z-index: 1;
+        }
+
+        .domino.horizontal {
+            width: 80px;
+            height: 40px;
+            flex-direction: row;
+            padding: 0 5px;
+        }
+
+        .domino.selected {
+            transform: translateY(-15px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+
+        .domino .pip {
+            width: 8px;
+            height: 8px;
+            background-color: #333;
+            border-radius: 50%;
+        }
+
+        .domino .pip-row {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .domino .pip-row.center {
+            justify-content: space-between;
+            width: 100%;
+            padding: 0 5px;
+        }
+
+        .player-area {
+            background-color: #4a6fa5;
+            border-radius: 8px;
+            padding: 10px;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .player-hand {
+            display: flex;
+            gap: 5px;
+            padding: 10px 0;
+            overflow-x: auto;
+            min-height: 90px;
+            align-items: center;
+        }
+
+        .player-hand::-webkit-scrollbar {
+            height: 5px;
+        }
+
+        .player-hand::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
+            border-radius: 5px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background-color: #ff9f1c;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            flex-grow: 1;
+            transition: background-color 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #ffbf69;
+        }
+
+        .game-status {
+            text-align: center;
+            margin: 10px 0;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .lobby {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+
+        .lobby h2 {
+            margin-bottom: 15px;
+            color: #4a6fa5;
+            text-align: center;
+        }
+
+        .player-list {
+            margin: 15px 0;
+        }
+
+        .player-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .game-list {
+            margin: 15px 0;
+        }
+
+        .game-item {
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal h2 {
+            margin-bottom: 15px;
+            color: #4a6fa5;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #4a6fa5;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .end-screen {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .end-screen h2 {
+            color: #4a6fa5;
+            margin-bottom: 15px;
+        }
+
+        .player-score {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .chat-container {
+            margin-top: 15px;
+            background-color: white;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .chat-messages {
+            height: 150px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 5px;
+        }
+
+        .chat-input input {
+            flex-grow: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .message {
+            margin-bottom: 8px;
+            word-break: break-word;
+            white-space: normal;
+        }
+
+        .message .sender {
+            font-weight: bold;
+            color: #4a6fa5;
+        }
+
+        .connection-status {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            background-color: #4CAF50;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 50;
+        }
+
+        .connection-status.disconnected {
+            background-color: #f44336;
+        }
+
+        .connection-status.reconnecting {
+            background-color: #FFC107;
+            color: #333;
+        }
+
+        @media (max-width: 400px) {
+            .domino {
+                width: 35px;
+                height: 70px;
+            }
+            
+            .domino.horizontal {
+                width: 70px;
+                height: 35px;
+            }
+            
+            button {
+                padding: 8px 10px;
+                font-size: 14px;
+            }
+        }
+
+        /* Animation classes */
+        @keyframes slideIn {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .animate-slide-in {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-in forwards;
+        }
+
+        /* Domino pip configurations */
+        .pip-1 { justify-content: center; align-items: center; }
+        .pip-2 { justify-content: space-between; }
+        .pip-2 .pip:first-child { align-self: flex-start; }
+        .pip-2 .pip:last-child { align-self: flex-end; }
+        .pip-3 { justify-content: space-between; }
+        .pip-3 .pip:first-child { align-self: flex-start; }
+        .pip-3 .pip:last-child { align-self: flex-end; }
+        .pip-3 .pip:nth-child(2) { align-self: center; }
+        .pip-4, .pip-6 { justify-content: space-between; flex-wrap: wrap; }
+        .pip-4 .pip-row, .pip-6 .pip-row { width: 100%; display: flex; justify-content: space-between; }
+        .pip-5 { justify-content: space-between; flex-wrap: wrap; }
+        .pip-5 .pip-row { width: 100%; display: flex; justify-content: space-between; }
+        .pip-5 .pip-row.center { justify-content: center; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="header">
+            <h1>Domino Game</h1>
+        </div>
+
+        <div class="connection-status" id="connectionStatus">Connected</div>
+
+        <!-- Lobby Screen -->
+        <div id="lobbyScreen" class="lobby animate-fade-in">
+            <h2>Game Lobby</h2>
+            <div id="playerInfo">
+                <input type="text" id="playerNameInput" placeholder="Enter your name" maxlength="20">
+                <button id="setNameBtn">Set Name</button>
+            </div>
+
+            <div id="lobbyContent" style="display: none;">
+                <div class="player-list">
+                    <h3>Online Players</h3>
+                    <div id="onlinePlayers"></div>
+                </div>
+
+                <div class="game-list">
+                    <h3>Available Games</h3>
+                    <div id="availableGames"></div>
+                </div>
+
+                <div class="controls">
+                    <button id="createGameBtn">Create New Game</button>
+                    <button id="joinRandomBtn">Join Random Game</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" style="display: none;">
+            <div class="game-status" id="gameStatus">Waiting for players...</div>
+            
+            <div class="game-container">
+                <div class="board">
+                    <div class="domino-chain" id="dominoChain"></div>
+                </div>
+
+                <div class="player-area">
+                    <h3>Your Hand</h3>
+                    <div class="player-hand" id="playerHand"></div>
+                    <div class="controls">
+                        <button id="drawBtn" disabled>Draw</button>
+                        <button id="passBtn" disabled>Pass</button>
+                    </div>
+                </div>
+
+                <div class="chat-container">
+                    <h3>Chat</h3>
+                    <div class="chat-messages" id="chatMessages"></div>
+                    <div class="chat-input">
+                        <input type="text" id="chatInput" placeholder="Type your message...">
+                        <button id="sendChatBtn">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameOverScreen" style="display: none;">
+            <div class="end-screen">
+                <h2>Game Over!</h2>
+                <div id="winnerMessage"></div>
+                <div id="scoresList"></div>
+                <button id="playAgainBtn">Play Again</button>
+                <button id="returnToLobbyBtn">Return to Lobby</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Name Modal -->
+    <div class="modal" id="nameModal">
+        <div class="modal-content">
+            <h2>Enter Your Name</h2>
+            <input type="text" id="modalNameInput" placeholder="Your name" maxlength="20">
+            <button id="confirmNameBtn">Confirm</button>
+        </div>
+    </div>
+
+    <!-- Game Creation Modal -->
+    <div class="modal" id="gameCreationModal">
+        <div class="modal-content">
+            <h2>Create New Game</h2>
+            <select id="gameModeSelect" style="width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px;">
+                <option value="block">Block Dominoes</option>
+                <option value="draw">Draw Dominoes</option>
+                <option value="mexican">Mexican Train</option>
+            </select>
+            <select id="maxPlayersSelect" style="width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px;">
+                <option value="2">2 Players</option>
+                <option value="3">3 Players</option>
+                <option value="4">4 Players</option>
+            </select>
+            <button id="confirmCreateGameBtn">Create Game</button>
+            <button id="cancelCreateGameBtn" style="background-color: #ccc; margin-top: 5px;">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="modal" id="loadingModal">
+        <div class="modal-content" style="text-align: center;">
+            <h2 id="loadingTitle">Loading</h2>
+            <div class="spinner"></div>
+            <p id="loadingMessage">Please wait...</p>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCMxiBRciVQ9oKeiw3X9hxv_4BhDKABtgQ",
+            authDomain: "web-site-ftw.firebaseapp.com",
+            databaseURL: "https://web-site-ftw-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "web-site-ftw",
+            storageBucket: "web-site-ftw.appspot.com",
+            messagingSenderId: "275070822133",
+            appId: "1:275070822133:web:f1fdc6c20b5af4690fc7bc",
+            measurementId: "G-PZ7JBGQWQE"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // DOM elements
+        const lobbyScreen = document.getElementById('lobbyScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const playerHand = document.getElementById('playerHand');
+        const dominoChain = document.getElementById('dominoChain');
+        const gameStatus = document.getElementById('gameStatus');
+        const playerNameInput = document.getElementById('playerNameInput');
+        const setNameBtn = document.getElementById('setNameBtn');
+        const onlinePlayers = document.getElementById('onlinePlayers');
+        const availableGames = document.getElementById('availableGames');
+        const createGameBtn = document.getElementById('createGameBtn');
+        const joinRandomBtn = document.getElementById('joinRandomBtn');
+        const drawBtn = document.getElementById('drawBtn');
+        const passBtn = document.getElementById('passBtn');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+        const returnToLobbyBtn = document.getElementById('returnToLobbyBtn');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendChatBtn = document.getElementById('sendChatBtn');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const nameModal = document.getElementById('nameModal');
+        const modalNameInput = document.getElementById('modalNameInput');
+        const confirmNameBtn = document.getElementById('confirmNameBtn');
+        const gameCreationModal = document.getElementById('gameCreationModal');
+        const confirmCreateGameBtn = document.getElementById('confirmCreateGameBtn');
+        const cancelCreateGameBtn = document.getElementById('cancelCreateGameBtn');
+        const gameModeSelect = document.getElementById('gameModeSelect');
+        const maxPlayersSelect = document.getElementById('maxPlayersSelect');
+        const loadingModal = document.getElementById('loadingModal');
+        const loadingTitle = document.getElementById('loadingTitle');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const lobbyContent = document.getElementById('lobbyContent');
+        const playerInfo = document.getElementById('playerInfo');
+        const winnerMessage = document.getElementById('winnerMessage');
+        const scoresList = document.getElementById('scoresList');
+
+        // Game state
+        let playerId;
+        let playerName = '';
+        let currentGameId = '';
+        let playerRef;
+        let gameRef;
+        let playersRef;
+        let gamesRef;
+        let chatRef;
+        let dominoSet = [];
+        let playerDominoes = [];
+        let gameState = {};
+        let lastLeftValue = null;
+        let lastRightValue = null;
+        let isCurrentPlayer = false;
+        let connectionRef;
+
+        // Initialize the game
+        function init() {
+            // Generate player ID
+            playerId = generateId();
+            
+            // Set up Firebase connection state listener
+            connectionRef = firebase.database().ref('.info/connected');
+            connectionRef.on('value', (snapshot) => {
+                if (snapshot.val() === true) {
+                    connectionStatus.textContent = 'Connected';
+                    connectionStatus.classList.remove('disconnected', 'reconnecting');
+                } else {
+                    connectionStatus.textContent = 'Disconnected';
+                    connectionStatus.classList.add('disconnected');
+                    connectionStatus.classList.remove('reconnecting');
+                }
+            });
+
+            // Set up database references
+            playerRef = database.ref('players/' + playerId);
+            playersRef = database.ref('players');
+            gamesRef = database.ref('games');
+            
+            // Show name modal if no name is set
+            if (!localStorage.getItem('dominoPlayerName')) {
+                showModal(nameModal);
+            } else {
+                playerName = localStorage.getItem('dominoPlayerName');
+                playerNameInput.value = playerName;
+                initializePlayer();
+            }
+
+            // Event listeners
+            setNameBtn.addEventListener('click', setName);
+            confirmNameBtn.addEventListener('click', confirmName);
+            createGameBtn.addEventListener('click', () => showModal(gameCreationModal));
+            joinRandomBtn.addEventListener('click', joinRandomGame);
+            confirmCreateGameBtn.addEventListener('click', createGame);
+            cancelCreateGameBtn.addEventListener('click', () => hideModal(gameCreationModal));
+            drawBtn.addEventListener('click', drawDomino);
+            passBtn.addEventListener('click', passTurn);
+            playAgainBtn.addEventListener('click', playAgain);
+            returnToLobbyBtn.addEventListener('click', returnToLobby);
+            sendChatBtn.addEventListener('click', sendChatMessage);
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendChatMessage();
+            });
+
+            // Listen for player clicks on dominoes
+            playerHand.addEventListener('click', (e) => {
+                if (!isCurrentPlayer) return;
+                
+                const dominoEl = e.target.closest('.domino');
+                if (!dominoEl) return;
+                
+                const index = parseInt(dominoEl.dataset.index);
+                const domino = playerDominoes[index];
+                
+                // Check if domino can be played
+                if (canPlayDomino(domino)) {
+                    playDomino(index);
+                } else {
+                    // Show feedback that move is invalid
+                    dominoEl.classList.add('selected');
+                    setTimeout(() => {
+                        dominoEl.classList.remove('selected');
+                    }, 500);
+                }
+            });
+
+            // Listen for player clicks on board dominoes (for placing)
+            dominoChain.addEventListener('click', (e) => {
+                if (!isCurrentPlayer) return;
+                
+                const dominoEl = e.target.closest('.domino');
+                if (!dominoEl) return;
+                
+                const selectedDomino = document.querySelector('.domino.selected');
+                if (!selectedDomino) return;
+                
+                const index = parseInt(selectedDomino.dataset.index);
+                const domino = playerDominoes[index];
+                const boardIndex = parseInt(dominoEl.dataset.boardIndex);
+                
+                // Determine placement (left or right)
+                const isLeft = boardIndex === 0;
+                placeDomino(index, isLeft);
+            });
+        }
+
+        // Show modal
+        function showModal(modal) {
+            modal.classList.add('active');
+        }
+
+        // Hide modal
+        function hideModal(modal) {
+            modal.classList.remove('active');
+        }
+
+        // Set player name from input field
+        function setName() {
+            const name = playerNameInput.value.trim();
+            if (name.length < 2 || name.length > 20) {
+                alert('Name must be between 2 and 20 characters');
+                return;
+            }
+            
+            playerName = name;
+            localStorage.setItem('dominoPlayerName', name);
+            initializePlayer();
+        }
+
+        // Confirm name from modal
+        function confirmName() {
+            const name = modalNameInput.value.trim();
+            if (name.length < 2 || name.length > 20) {
+                alert('Name must be between 2 and 20 characters');
+                return;
+            }
+            
+            playerName = name;
+            localStorage.setItem('dominoPlayerName', name);
+            playerNameInput.value = name;
+            hideModal(nameModal);
+            initializePlayer();
+        }
+
+        // Initialize player in Firebase
+        function initializePlayer() {
+            showLoading('Connecting', 'Setting up your player profile...');
+            
+            // Set player data
+            playerRef.set({
+                name: playerName,
+                status: 'online',
+                gameId: '',
+                lastActive: firebase.database.ServerValue.TIMESTAMP
+            });
+            
+            // Set up player presence
+            playerRef.onDisconnect().update({
+                status: 'offline',
+                lastActive: firebase.database.ServerValue.TIMESTAMP
+            });
+            
+            // Show lobby content
+            lobbyContent.style.display = 'block';
+            playerInfo.style.display = 'none';
+            
+            // Listen for online players
+            playersRef.orderByChild('status').equalTo('online').on('value', (snapshot) => {
+                onlinePlayers.innerHTML = '';
+                const players = snapshot.val() || {};
+                
+                Object.keys(players).forEach(key => {
+                    if (key === playerId) return; // Skip self
+                    
+                    const player = players[key];
+                    const playerEl = document.createElement('div');
+                    playerEl.className = 'player-item';
+                    playerEl.innerHTML = `
+                        <span>${player.name}</span>
+                        ${player.gameId ? '<span class="in-game">In Game</span>' : '<span class="available">Available</span>'}
+                    `;
+                    onlinePlayers.appendChild(playerEl);
+                });
+            });
+            
+            // Listen for available games
+            gamesRef.orderByChild('status').equalTo('waiting').on('value', (snapshot) => {
+                availableGames.innerHTML = '';
+                const games = snapshot.val() || {};
+                
+                Object.keys(games).forEach(key => {
+                    const game = games[key];
+                    if (game.players.length >= game.maxPlayers) return;
+                    
+                    const gameEl = document.createElement('div');
+                    gameEl.className = 'game-item animate-slide-in';
+                    gameEl.innerHTML = `
+                        <div>
+                            <strong>${game.mode}</strong><br>
+                            Players: ${game.players.length}/${game.maxPlayers}
+                        </div>
+                        <button class="join-game-btn" data-gameid="${key}">Join</button>
+                    `;
+                    availableGames.appendChild(gameEl);
+                    
+                    // Add event listener to join button
+                    gameEl.querySelector('.join-game-btn').addEventListener('click', (e) => {
+                        joinGame(e.target.dataset.gameid);
+                    });
+                });
+            });
+            
+            hideLoading();
+        }
+
+        // Create a new game
+        function createGame() {
+            const mode = gameModeSelect.value;
+            const maxPlayers = parseInt(maxPlayersSelect.value);
+            
+            showLoading('Creating Game', 'Setting up your new game...');
+            hideModal(gameCreationModal);
+            
+            const newGameRef = gamesRef.push();
+            currentGameId = newGameRef.key;
+            
+            const gameData = {
+                mode: getModeName(mode),
+                modeType: mode,
+                status: 'waiting',
+                maxPlayers: maxPlayers,
+                players: [{
+                    id: playerId,
+                    name: playerName,
+                    score: 0,
+                    isHost: true
+                }],
+                currentPlayer: '',
+                board: [],
+                lastMove: null,
+                stock: [],
+                started: false,
+                createdAt: firebase.database.ServerValue.TIMESTAMP
+            };
+            
+            newGameRef.set(gameData)
+                .then(() => {
+                    // Update player's game reference
+                    playerRef.update({ gameId: currentGameId });
+                    
+                    // Set up game listeners
+                    setupGameListeners();
+                    
+                    // Show game screen
+                    lobbyScreen.style.display = 'none';
+                    gameScreen.style.display = 'block';
+                    
+                    hideLoading();
+                })
+                .catch(error => {
+                    console.error('Error creating game:', error);
+                    hideLoading();
+                    alert('Failed to create game. Please try again.');
+                });
+        }
+
+        // Join a random game
+        function joinRandomGame() {
+            showLoading('Finding Game', 'Looking for an available game...');
+            
+            gamesRef.orderByChild('status').equalTo('waiting').once('value')
+                .then(snapshot => {
+                    const games = snapshot.val() || {};
+                    const availableGameIds = Object.keys(games).filter(key => {
+                        return games[key].players.length < games[key].maxPlayers;
+                    });
+                    
+                    if (availableGameIds.length === 0) {
+                        hideLoading();
+                        alert('No available games found. Please create a new game.');
+                        return;
+                    }
+                    
+                    // Join a random available game
+                    const randomIndex = Math.floor(Math.random() * availableGameIds.length);
+                    joinGame(availableGameIds[randomIndex]);
+                })
+                .catch(error => {
+                    console.error('Error finding random game:', error);
+                    hideLoading();
+                    alert('Failed to find a game. Please try again.');
+                });
+        }
+
+        // Join a specific game
+        function joinGame(gameId) {
+            showLoading('Joining Game', 'Connecting to the game...');
+            
+            currentGameId = gameId;
+            gameRef = gamesRef.child(gameId);
+            
+            // Check if game exists and has space
+            gameRef.once('value')
+                .then(snapshot => {
+                    const game = snapshot.val();
+                    if (!game || game.status !== 'waiting' || game.players.length >= game.maxPlayers) {
+                        hideLoading();
+                        alert('This game is no longer available.');
+                        return;
+                    }
+                    
+                    // Add player to game
+                    return gameRef.child('players').push({
+                        id: playerId,
+                        name: playerName,
+                        score: 0,
+                        isHost: false
+                    });
+                })
+                .then(() => {
+                    // Update player's game reference
+                    return playerRef.update({ gameId: currentGameId });
+                })
+                .then(() => {
+                    // Set up game listeners
+                    setupGameListeners();
+                    
+                    // Show game screen
+                    lobbyScreen.style.display = 'none';
+                    gameScreen.style.display = 'block';
+                    
+                    hideLoading();
+                })
+                .catch(error => {
+                    console.error('Error joining game:', error);
+                    hideLoading();
+                    alert('Failed to join game. Please try again.');
+                });
+        }
+
+        // Set up game listeners
+        function setupGameListeners() {
+            if (!currentGameId) return;
+            
+            gameRef = gamesRef.child(currentGameId);
+            chatRef = gameRef.child('chat');
+            
+            // Listen for game state changes
+            gameRef.on('value', (snapshot) => {
+                const game = snapshot.val();
+                if (!game) {
+                    // Game no longer exists
+                    alert('This game has been ended by the host.');
+                    returnToLobby();
+                    return;
+                }
+                
+                gameState = game;
+                
+                // Update UI based on game state
+                updateGameUI(game);
+                
+                // Start game if conditions are met
+                if (game.status === 'waiting' && game.players.length >= 2 && !game.started) {
+                    // Only host can start the game
+                    const isHost = game.players.some(p => p.id === playerId && p.isHost);
+                    if (isHost) {
+                        startGame();
+                    }
+                }
+            });
+            
+            // Listen for chat messages
+            chatRef.limitToLast(20).on('value', (snapshot) => {
+                chatMessages.innerHTML = '';
+                const messages = snapshot.val() || {};
+                
+                Object.keys(messages).forEach(key => {
+                    const message = messages[key];
+                    const messageEl = document.createElement('div');
+                    messageEl.className = 'message';
+                    messageEl.innerHTML = `
+                        <span class="sender">${message.sender}:</span> ${message.text}
+                    `;
+                    chatMessages.appendChild(messageEl);
+                });
+                
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            });
+        }
+
+        // Start the game
+        function startGame() {
+            showLoading('Starting Game', 'Setting up the dominoes...');
+            
+            // Generate domino set
+            const dominoSet = generateDominoSet();
+            
+            // Shuffle dominoes
+            shuffleArray(dominoSet);
+            
+            // Determine how many dominoes each player gets
+            const numPlayers = gameState.players.length;
+            let dominoesPerPlayer;
+            
+            if (numPlayers === 2) dominoesPerPlayer = 7;
+            else if (numPlayers === 3) dominoesPerPlayer = 5;
+            else dominoesPerPlayer = 5; // For 4 players
+            
+            // Deal dominoes to players
+            const playersWithDominoes = gameState.players.map((player, index) => {
+                const start = index * dominoesPerPlayer;
+                const end = start + dominoesPerPlayer;
+                const dominoes = dominoSet.slice(start, end);
+                return {
+                    ...player,
+                    dominoes: dominoes,
+                    score: 0
+                };
+            });
+            
+            // Remaining dominoes go to the stock
+            const stock = dominoSet.slice(numPlayers * dominoesPerPlayer);
+            
+            // Determine who starts (player with the highest double)
+            let startingPlayerIndex = 0;
+            let highestDouble = -1;
+            
+            playersWithDominoes.forEach((player, index) => {
+                player.dominoes.forEach(domino => {
+                    if (domino[0] === domino[1] && domino[0] > highestDouble) {
+                        highestDouble = domino[0];
+                        startingPlayerIndex = index;
+                    }
+                });
+            });
+            
+            // If no doubles, player with highest sum domino starts
+            if (highestDouble === -1) {
+                let highestSum = -1;
+                
+                playersWithDominoes.forEach((player, index) => {
+                    player.dominoes.forEach(domino => {
+                        const sum = domino[0] + domino[1];
+                        if (sum > highestSum) {
+                            highestSum = sum;
+                            startingPlayerIndex = index;
+                        }
+                    });
+                });
+            }
+            
+            // Update game state
+            gameRef.update({
+                status: 'playing',
+                started: true,
+                players: playersWithDominoes,
+                stock: stock,
+                currentPlayer: playersWithDominoes[startingPlayerIndex].id,
+                lastMove: {
+                    playerId: '',
+                    action: 'start',
+                    domino: null,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                }
+            })
+            .then(() => {
+                hideLoading();
+            })
+            .catch(error => {
+                console.error('Error starting game:', error);
+                hideLoading();
+            });
+        }
+
+        // Update game UI based on game state
+        function updateGameUI(game) {
+            // Update game status
+            if (game.status === 'waiting') {
+                gameStatus.textContent = `Waiting for players (${game.players.length}/${game.maxPlayers})`;
+                return;
+            }
+            
+            if (!game.started) return;
+            
+            // Find current player
+            const currentPlayer = game.players.find(p => p.id === game.currentPlayer);
+            const isCurrentPlayer = currentPlayer && currentPlayer.id === playerId;
+            
+            // Update status message
+            if (isCurrentPlayer) {
+                gameStatus.textContent = 'Your turn!';
+                gameStatus.style.color = '#4CAF50';
+            } else {
+                gameStatus.textContent = `${currentPlayer ? currentPlayer.name + "'s turn" : 'Waiting...'}`;
+                gameStatus.style.color = '#333';
+            }
+            
+            // Update board
+            updateBoard(game.board);
+            
+            // Update player's hand if it's you
+            const player = game.players.find(p => p.id === playerId);
+            if (player) {
+                playerDominoes = player.dominoes || [];
+                updatePlayerHand(playerDominoes, isCurrentPlayer);
+                
+                // Update buttons based on turn
+                drawBtn.disabled = !isCurrentPlayer || game.stock.length === 0;
+                passBtn.disabled = !isCurrentPlayer || !canPass(game);
+            }
+            
+            // Check for game over
+            if (game.status === 'ended') {
+                showGameOver(game);
+            }
+        }
+
+        // Update the board display
+        function updateBoard(board) {
+            dominoChain.innerHTML = '';
+            
+            if (board.length === 0) return;
+            
+            // Track left and right values
+            lastLeftValue = board[0][0];
+            lastRightValue = board[board.length - 1][1];
+            
+            board.forEach((domino, index) => {
+                const dominoEl = createDominoElement(domino, index);
+                dominoChain.appendChild(dominoEl);
+            });
+        }
+
+        // Update player's hand
+        function updatePlayerHand(dominoes, isCurrentTurn) {
+            playerHand.innerHTML = '';
+            
+            dominoes.forEach((domino, index) => {
+                const dominoEl = createDominoElement(domino, index);
+                dominoEl.classList.add('player-domino');
+                if (isCurrentTurn) {
+                    dominoEl.style.cursor = 'pointer';
+                }
+                playerHand.appendChild(dominoEl);
+            });
+        }
+
+        // Create a domino element
+        function createDominoElement(domino, index) {
+            const dominoEl = document.createElement('div');
+            dominoEl.className = 'domino';
+            dominoEl.dataset.index = index;
+            
+            if (domino.isHorizontal) {
+                dominoEl.classList.add('horizontal');
+            }
+            
+            // Add pips
+            const leftValue = domino[0];
+            const rightValue = domino[1];
+            
+            const leftPips = document.createElement('div');
+            leftPips.className = `pip-side pip-${leftValue}`;
+            
+            const rightPips = document.createElement('div');
+            rightPips.className = `pip-side pip-${rightValue}`;
+            
+            // Add pips based on value
+            for (let i = 0; i < leftValue; i++) {
+                const pip = document.createElement('div');
+                pip.className = 'pip';
+                leftPips.appendChild(pip);
+            }
+            
+            for (let i = 0; i < rightValue; i++) {
+                const pip = document.createElement('div');
+                pip.className = 'pip';
+                rightPips.appendChild(pip);
+            }
+            
+            dominoEl.appendChild(leftPips);
+            dominoEl.appendChild(rightPips);
+            
+            return dominoEl;
+        }
+
+        // Check if a domino can be played
+        function canPlayDomino(domino) {
+            if (!gameState.board || gameState.board.length === 0) {
+                return true; // First domino can always be played
+            }
+            
+            const leftValue = domino[0];
+            const rightValue = domino[1];
+            
+            return leftValue === lastLeftValue || leftValue === lastRightValue ||
+                   rightValue === lastLeftValue || rightValue === lastRightValue;
+        }
+
+        // Play a domino
+        function playDomino(index) {
+            const domino = playerDominoes[index];
+            if (!domino) return;
+            
+            // Check if we need to select placement (for non-first domino)
+            if (gameState.board.length > 0) {
+                const selectedDomino = document.querySelector('.domino.selected');
+                if (selectedDomino) {
+                    selectedDomino.classList.remove('selected');
+                }
+                
+                // Select the domino and wait for placement click
+                const dominoEl = playerHand.children[index];
+                dominoEl.classList.add('selected');
+                return;
+            }
+            
+            // For first domino, just place it
+            placeDomino(index, true);
+        }
+
+        // Place a domino on the board (left or right)
+        function placeDomino(index, isLeft) {
+            const domino = playerDominoes[index];
+            if (!domino) return;
+            
+            // Determine if we need to rotate the domino
+            let rotatedDomino = [...domino];
+            let isRotated = false;
+            
+            if (gameState.board.length > 0) {
+                if (isLeft) {
+                    // Placing on left - domino's right must match board's left
+                    if (domino[0] !== lastLeftValue && domino[1] !== lastLeftValue) {
+                        // Invalid move
+                        return;
+                    }
+                    
+                    if (domino[1] === lastLeftValue) {
+                        // No rotation needed
+                        rotatedDomino = domino;
+                    } else {
+                        // Rotate the domino
+                        rotatedDomino = [domino[1], domino[0]];
+                        isRotated = true;
+                    }
+                } else {
+                    // Placing on right - domino's left must match board's right
+                    if (domino[0] !== lastRightValue && domino[1] !== lastRightValue) {
+                        // Invalid move
+                        return;
+                    }
+                    
+                    if (domino[0] === lastRightValue) {
+                        // No rotation needed
+                        rotatedDomino = domino;
+                    } else {
+                        // Rotate the domino
+                        rotatedDomino = [domino[1], domino[0]];
+                        isRotated = true;
+                    }
                 }
             }
-        });
+            
+            // Update game state
+            showLoading('Playing', 'Updating game...');
+            
+            // Create updated board
+            let newBoard = [...gameState.board];
+            if (isLeft) {
+                newBoard.unshift(rotatedDomino);
+            } else {
+                newBoard.push(rotatedDomino);
+            }
+            
+            // Update player's dominoes
+            const updatedPlayers = [...gameState.players];
+            const playerIndex = updatedPlayers.findIndex(p => p.id === playerId);
+            if (playerIndex !== -1) {
+                updatedPlayers[playerIndex].dominoes = [
+                    ...updatedPlayers[playerIndex].dominoes.slice(0, index),
+                    ...updatedPlayers[playerIndex].dominoes.slice(index + 1)
+                ];
+            }
+            
+            // Determine next player
+            const nextPlayerIndex = (gameState.players.findIndex(p => p.id === gameState.currentPlayer) + 1;
+            const nextPlayer = gameState.players[nextPlayerIndex % gameState.players.length];
+            
+            // Check for game over (player has no dominoes left)
+            if (updatedPlayers[playerIndex].dominoes.length === 0) {
+                endGame(playerId);
+                return;
+            }
+            
+            // Update game state
+            gameRef.update({
+                board: newBoard,
+                players: updatedPlayers,
+                currentPlayer: nextPlayer.id,
+                lastMove: {
+                    playerId: playerId,
+                    action: 'play',
+                    domino: rotatedDomino,
+                    position: isLeft ? 'left' : 'right',
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                }
+            })
+            .then(() => {
+                hideLoading();
+            })
+            .catch(error => {
+                console.error('Error playing domino:', error);
+                hideLoading();
+            });
+        }
+
+        // Draw a domino from the stock
+        function drawDomino() {
+            if (gameState.stock.length === 0) return;
+            
+            showLoading('Drawing', 'Taking a domino from the stock...');
+            
+            // Take first domino from stock
+            const drawnDomino = gameState.stock[0];
+            const newStock = gameState.stock.slice(1);
+            
+            // Add to player's hand
+            const updatedPlayers = [...gameState.players];
+            const playerIndex = updatedPlayers.findIndex(p => p.id === playerId);
+            if (playerIndex !== -1) {
+                updatedPlayers[playerIndex].dominoes = [
+                    ...updatedPlayers[playerIndex].dominoes,
+                    drawnDomino
+                ];
+            }
+            
+            // Update game state
+            gameRef.update({
+                stock: newStock,
+                players: updatedPlayers,
+                lastMove: {
+                    playerId: playerId,
+                    action: 'draw',
+                    domino: drawnDomino,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                }
+            })
+            .then(() => {
+                hideLoading();
+            })
+            .catch(error => {
+                console.error('Error drawing domino:', error);
+                hideLoading();
+            });
+        }
+
+        // Pass turn
+        function passTurn() {
+            if (!canPass(gameState)) return;
+            
+            showLoading('Passing', 'Passing your turn...');
+            
+            // Determine next player
+            const nextPlayerIndex = (gameState.players.findIndex(p => p.id === gameState.currentPlayer) + 1;
+            const nextPlayer = gameState.players[nextPlayerIndex % gameState.players.length];
+            
+            // Update game state
+            gameRef.update({
+                currentPlayer: nextPlayer.id,
+                lastMove: {
+                    playerId: playerId,
+                    action: 'pass',
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                }
+            })
+            .then(() => {
+                hideLoading();
+            })
+            .catch(error => {
+                console.error('Error passing turn:', error);
+                hideLoading();
+            });
+        }
+
+        // Check if player can pass
+        function canPass(game) {
+            // Can't pass if stock has dominoes left
+            if (game.stock.length > 0) return false;
+            
+            // Can't pass if you can play a domino
+            const player = game.players.find(p => p.id === playerId);
+            if (!player) return false;
+            
+            return !player.dominoes.some(domino => canPlayDomino(domino));
+        }
+
+        // End the game
+        function endGame(winnerId) {
+            // Calculate scores
+            const updatedPlayers = [...gameState.players];
+            let winner = null;
+            
+            updatedPlayers.forEach(player => {
+                if (player.id === winnerId) {
+                    // Winner gets points equal to sum of all other players' dominoes
+                    let totalPoints = 0;
+                    updatedPlayers.forEach(p => {
+                        if (p.id !== winnerId) {
+                            totalPoints += sumDominoes(p.dominoes);
+                        }
+                    });
+                    player.score += totalPoints;
+                    winner = player;
+                }
+            });
+            
+            // Update game state
+            gameRef.update({
+                status: 'ended',
+                players: updatedPlayers,
+                winner: winnerId,
+                lastMove: {
+                    playerId: winnerId,
+                    action: 'win',
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                }
+            });
+        }
+
+        // Show game over screen
+        function showGameOver(game) {
+            gameScreen.style.display = 'none';
+            gameOverScreen.style.display = 'block';
+            
+            // Find winner
+            const winner = game.players.find(p => p.id === game.winner);
+            
+            // Update winner message
+            if (winner) {
+                winnerMessage.textContent = `${winner.name} wins with ${winner.score} points!`;
+            } else {
+                winnerMessage.textContent = 'Game ended in a draw!';
+            }
+            
+            // Update scores list
+            scoresList.innerHTML = '';
+            game.players.sort((a, b) => b.score - a.score).forEach(player => {
+                const scoreEl = document.createElement('div');
+                scoreEl.className = 'player-score';
+                scoreEl.innerHTML = `
+                    <span>${player.name}</span>
+                    <span>${player.score} points</span>
+                `;
+                scoresList.appendChild(scoreEl);
+            });
+        }
+
+        // Play again
+        function playAgain() {
+            if (!gameState.players.some(p => p.id === playerId && p.isHost)) {
+                // Only host can start a new game
+                returnToLobby();
+                return;
+            }
+            
+            showLoading('Starting New Game', 'Setting up a new round...');
+            
+            // Generate new domino set
+            const dominoSet = generateDominoSet();
+            shuffleArray(dominoSet);
+            
+            // Determine how many dominoes each player gets
+            const numPlayers = gameState.players.length;
+            let dominoesPerPlayer;
+            
+            if (numPlayers === 2) dominoesPerPlayer = 7;
+            else if (numPlayers === 3) dominoesPerPlayer = 5;
+            else dominoesPerPlayer = 5; // For 4 players
+            
+            // Deal dominoes to players
+            const playersWithDominoes = gameState.players.map((player, index) => {
+                const start = index * dominoesPerPlayer;
+                const end = start + dominoesPerPlayer;
+                const dominoes = dominoSet.slice(start, end);
+                return {
+                    ...player,
+                    dominoes: dominoes
+                };
+            });
+            
+            // Remaining dominoes go to the stock
+            const stock = dominoSet.slice(numPlayers * dominoesPerPlayer);
+            
+            // Determine who starts (previous winner or next player)
+            let startingPlayerIndex = 0;
+            if (gameState.winner) {
+                const winnerIndex = gameState.players.findIndex(p => p.id === gameState.winner);
+                if (winnerIndex !== -1) {
+                    startingPlayerIndex = winnerIndex;
+                }
+            }
+            
+            // Update game state
+            gameRef.update({
+                status: 'playing',
+                board: [],
+                players: playersWithDominoes,
+                stock: stock,
+                currentPlayer: gameState.players[startingPlayerIndex].id,
+                winner: null,
+                lastMove: {
+                    playerId: '',
+                    action: 'new_round',
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                }
+            })
+            .then(() => {
+                gameOverScreen.style.display = 'none';
+                gameScreen.style.display = 'block';
+                hideLoading();
+            })
+            .catch(error => {
+                console.error('Error starting new game:', error);
+                hideLoading();
+            });
+        }
+
+        // Return to lobby
+        function returnToLobby() {
+            // Remove player from game
+            if (currentGameId) {
+                const playerIndex = gameState.players.findIndex(p => p.id === playerId);
+                if (playerIndex !== -1) {
+                    const updatedPlayers = [...gameState.players];
+                    updatedPlayers.splice(playerIndex, 1);
+                    
+                    // If no players left, delete the game
+                    if (updatedPlayers.length === 0) {
+                        gamesRef.child(currentGameId).remove();
+                    } else {
+                        // If host left, assign new host
+                        const wasHost = gameState.players[playerIndex].isHost;
+                        if (wasHost && updatedPlayers.length > 0) {
+                            updatedPlayers[0].isHost = true;
+                        }
+                        
+                        // Update game
+                        gamesRef.child(currentGameId).update({
+                            players: updatedPlayers
+                        });
+                    }
+                }
+            }
+            
+            // Update player's game reference
+            playerRef.update({ gameId: '' });
+            
+            // Reset game state
+            currentGameId = '';
+            playerDominoes = [];
+            gameState = {};
+            
+            // Show lobby screen
+            gameScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+            lobbyScreen.style.display = 'block';
+            
+            // Remove game listeners
+            if (gameRef) {
+                gameRef.off();
+                gameRef = null;
+            }
+            
+            if (chatRef) {
+                chatRef.off();
+                chatRef = null;
+            }
+        }
+
+        // Send chat message
+        function sendChatMessage() {
+            const message = chatInput.value.trim();
+            if (message.length === 0) return;
+            
+            chatRef.push({
+                sender: playerName,
+                text: message,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+            
+            chatInput.value = '';
+        }
+
+        // Show loading modal
+        function showLoading(title, message) {
+            loadingTitle.textContent = title;
+            loadingMessage.textContent = message;
+            loadingModal.classList.add('active');
+        }
+
+        // Hide loading modal
+        function hideLoading() {
+            loadingModal.classList.remove('active');
+        }
+
+        // Helper functions
+        function generateId() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        function generateDominoSet() {
+            const dominoes = [];
+            for (let i = 0; i <= 6; i++) {
+                for (let j = i; j <= 6; j++) {
+                    dominoes.push([i, j]);
+                }
+            }
+            return dominoes;
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function sumDominoes(dominoes) {
+            return dominoes.reduce((sum, domino) => sum + domino[0] + domino[1], 0);
+        }
+
+        function getModeName(mode) {
+            switch (mode) {
+                case 'block': return 'Block Dominoes';
+                case 'draw': return 'Draw Dominoes';
+                case 'mexican': return 'Mexican Train';
+                default: return 'Dominoes';
+            }
+        }
+
+        // Initialize the game when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
