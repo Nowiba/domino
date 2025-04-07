@@ -257,7 +257,7 @@
             color: #4a6fa5;
         }
 
-        input[type="text"] {
+        input[type="text"], select {
             width: 100%;
             padding: 10px;
             margin: 10px 0;
@@ -420,33 +420,26 @@
 
         <div class="connection-status" id="connectionStatus">Connected</div>
 
-        <!-- Lobby Screen -->
-        <div id="lobbyScreen" class="lobby animate-fade-in">
+        <!-- Lobby Screen (initially hidden) -->
+        <div id="lobbyScreen" class="lobby" style="display: none;">
             <h2>Game Lobby</h2>
-            <div id="playerInfo">
-                <input type="text" id="playerNameInput" placeholder="Enter your name" maxlength="20">
-                <button id="setNameBtn">Set Name</button>
+            <div class="player-list">
+                <h3>Online Players</h3>
+                <div id="onlinePlayers"></div>
             </div>
 
-            <div id="lobbyContent" style="display: none;">
-                <div class="player-list">
-                    <h3>Online Players</h3>
-                    <div id="onlinePlayers"></div>
-                </div>
+            <div class="game-list">
+                <h3>Available Games</h3>
+                <div id="availableGames"></div>
+            </div>
 
-                <div class="game-list">
-                    <h3>Available Games</h3>
-                    <div id="availableGames"></div>
-                </div>
-
-                <div class="controls">
-                    <button id="createGameBtn">Create New Game</button>
-                    <button id="joinRandomBtn">Join Random Game</button>
-                </div>
+            <div class="controls">
+                <button id="createGameBtn">Create New Game</button>
+                <button id="joinRandomBtn">Join Random Game</button>
             </div>
         </div>
 
-        <!-- Game Screen -->
+        <!-- Game Screen (initially hidden) -->
         <div id="gameScreen" style="display: none;">
             <div class="game-status" id="gameStatus">Waiting for players...</div>
             
@@ -475,7 +468,7 @@
             </div>
         </div>
 
-        <!-- Game Over Screen -->
+        <!-- Game Over Screen (initially hidden) -->
         <div id="gameOverScreen" style="display: none;">
             <div class="end-screen">
                 <h2>Game Over!</h2>
@@ -487,11 +480,11 @@
         </div>
     </div>
 
-    <!-- Name Modal -->
-    <div class="modal" id="nameModal">
+    <!-- Name Modal (shown first) -->
+    <div class="modal active" id="nameModal">
         <div class="modal-content">
             <h2>Enter Your Name</h2>
-            <input type="text" id="modalNameInput" placeholder="Your name" maxlength="20">
+            <input type="text" id="playerNameInput" placeholder="Your name" maxlength="20">
             <button id="confirmNameBtn">Confirm</button>
         </div>
     </div>
@@ -500,12 +493,12 @@
     <div class="modal" id="gameCreationModal">
         <div class="modal-content">
             <h2>Create New Game</h2>
-            <select id="gameModeSelect" style="width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px;">
+            <select id="gameModeSelect">
                 <option value="block">Block Dominoes</option>
                 <option value="draw">Draw Dominoes</option>
                 <option value="mexican">Mexican Train</option>
             </select>
-            <select id="maxPlayersSelect" style="width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px;">
+            <select id="maxPlayersSelect">
                 <option value="2">2 Players</option>
                 <option value="3">3 Players</option>
                 <option value="4">4 Players</option>
@@ -550,8 +543,6 @@
         const playerHand = document.getElementById('playerHand');
         const dominoChain = document.getElementById('dominoChain');
         const gameStatus = document.getElementById('gameStatus');
-        const playerNameInput = document.getElementById('playerNameInput');
-        const setNameBtn = document.getElementById('setNameBtn');
         const onlinePlayers = document.getElementById('onlinePlayers');
         const availableGames = document.getElementById('availableGames');
         const createGameBtn = document.getElementById('createGameBtn');
@@ -565,7 +556,7 @@
         const sendChatBtn = document.getElementById('sendChatBtn');
         const connectionStatus = document.getElementById('connectionStatus');
         const nameModal = document.getElementById('nameModal');
-        const modalNameInput = document.getElementById('modalNameInput');
+        const playerNameInput = document.getElementById('playerNameInput');
         const confirmNameBtn = document.getElementById('confirmNameBtn');
         const gameCreationModal = document.getElementById('gameCreationModal');
         const confirmCreateGameBtn = document.getElementById('confirmCreateGameBtn');
@@ -575,8 +566,6 @@
         const loadingModal = document.getElementById('loadingModal');
         const loadingTitle = document.getElementById('loadingTitle');
         const loadingMessage = document.getElementById('loadingMessage');
-        const lobbyContent = document.getElementById('lobbyContent');
-        const playerInfo = document.getElementById('playerInfo');
         const winnerMessage = document.getElementById('winnerMessage');
         const scoresList = document.getElementById('scoresList');
 
@@ -620,17 +609,7 @@
             playersRef = database.ref('players');
             gamesRef = database.ref('games');
             
-            // Show name modal if no name is set
-            if (!localStorage.getItem('dominoPlayerName')) {
-                showModal(nameModal);
-            } else {
-                playerName = localStorage.getItem('dominoPlayerName');
-                playerNameInput.value = playerName;
-                initializePlayer();
-            }
-
             // Event listeners
-            setNameBtn.addEventListener('click', setName);
             confirmNameBtn.addEventListener('click', confirmName);
             createGameBtn.addEventListener('click', () => showModal(gameCreationModal));
             joinRandomBtn.addEventListener('click', joinRandomGame);
@@ -697,8 +676,8 @@
             modal.classList.remove('active');
         }
 
-        // Set player name from input field
-        function setName() {
+        // Confirm name from modal
+        function confirmName() {
             const name = playerNameInput.value.trim();
             if (name.length < 2 || name.length > 20) {
                 alert('Name must be between 2 and 20 characters');
@@ -707,20 +686,6 @@
             
             playerName = name;
             localStorage.setItem('dominoPlayerName', name);
-            initializePlayer();
-        }
-
-        // Confirm name from modal
-        function confirmName() {
-            const name = modalNameInput.value.trim();
-            if (name.length < 2 || name.length > 20) {
-                alert('Name must be between 2 and 20 characters');
-                return;
-            }
-            
-            playerName = name;
-            localStorage.setItem('dominoPlayerName', name);
-            playerNameInput.value = name;
             hideModal(nameModal);
             initializePlayer();
         }
@@ -743,9 +708,8 @@
                 lastActive: firebase.database.ServerValue.TIMESTAMP
             });
             
-            // Show lobby content
-            lobbyContent.style.display = 'block';
-            playerInfo.style.display = 'none';
+            // Show lobby screen
+            lobbyScreen.style.display = 'block';
             
             // Listen for online players
             playersRef.orderByChild('status').equalTo('online').on('value', (snapshot) => {
@@ -1069,7 +1033,7 @@
             
             // Find current player
             const currentPlayer = game.players.find(p => p.id === game.currentPlayer);
-            const isCurrentPlayer = currentPlayer && currentPlayer.id === playerId;
+            isCurrentPlayer = currentPlayer && currentPlayer.id === playerId;
             
             // Update status message
             if (isCurrentPlayer) {
@@ -1269,8 +1233,8 @@
             }
             
             // Determine next player
-            const nextPlayerIndex = (gameState.players.findIndex(p => p.id === gameState.currentPlayer) + 1;
-            const nextPlayer = gameState.players[nextPlayerIndex % gameState.players.length];
+            const nextPlayerIndex = (gameState.players.findIndex(p => p.id === gameState.currentPlayer) + 1) % gameState.players.length;
+            const nextPlayer = gameState.players[nextPlayerIndex];
             
             // Check for game over (player has no dominoes left)
             if (updatedPlayers[playerIndex].dominoes.length === 0) {
