@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dominoes Game</title>
     <style>
-        body { 
+        body {
             font-family: Arial, sans-serif;
             margin: 20px;
             padding: 0;
             background: #f0f0f0;
+            transition: opacity 0.3s;
         }
+        .hidden { display: none; }
         .domino {
             width: 60px;
             height: 120px;
@@ -38,24 +40,38 @@
             border-radius: 10px;
         }
         button {
-            padding: 10px 20px;
+            padding: 15px 30px;
             background: #4CAF50;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        #game-mode-selection {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        #status {
+            margin: 20px 0;
+            font-weight: bold;
+            text-align: center;
         }
     </style>
 </head>
 <body>
-    <h1>Dominoes Game</h1>
     <div id="game-mode-selection">
+        <h1>Dominoes Game</h1>
         <button onclick="startGame('vsBot')">Play vs Bot</button>
         <button onclick="startGame('multiplayer')">Multiplayer</button>
     </div>
-    <div id="game-board" class="board"></div>
-    <div id="player-hand" class="player-hand"></div>
-    <div id="status"></div>
+
+    <div id="game-container" class="hidden">
+        <div id="game-board" class="board"></div>
+        <div id="player-hand" class="player-hand"></div>
+        <div id="status"></div>
+    </div>
 
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js"></script>
@@ -86,6 +102,8 @@
         };
 
         // DOM Elements
+        const gameModeSelection = document.getElementById('game-mode-selection');
+        const gameContainer = document.getElementById('game-container');
         const gameBoard = document.getElementById('game-board');
         const playerHand = document.getElementById('player-hand');
         const statusDiv = document.getElementById('status');
@@ -126,9 +144,12 @@
         }
 
         function startGame(mode) {
-            document.getElementById('game-mode-selection').style.display = 'none';
-            gameState.gameMode = mode;
+            // Show loading state
+            gameModeSelection.style.opacity = '0.5';
+            gameModeSelection.querySelectorAll('button').forEach(btn => btn.disabled = true);
 
+            gameState.gameMode = mode;
+            
             if (mode === 'multiplayer') {
                 gameRef = database.ref('games').push();
                 gameRef.set({
@@ -140,26 +161,37 @@
 
                 gameRef.on('value', (snapshot) => {
                     gameState = snapshot.val() || gameState;
-                    renderGame();
+                    initializeGame();
                 });
             } else {
-                initializeLocalGame();
+                initializeGame();
             }
         }
 
-        function initializeLocalGame() {
-            let dominoes = shuffle(createDominoes());
-            gameState.players[playerId] = { hand: dominoes.splice(0, 7) };
-            gameState.stock = dominoes;
-            gameState.players['bot'] = { hand: dominoes.splice(0, 7) };
-            gameState.turn = playerId;
+        function initializeGame() {
+            // Hide menu and show game
+            gameModeSelection.classList.add('hidden');
+            gameContainer.classList.remove('hidden');
+
+            // Initialize game state
+            if (gameState.gameMode === 'vsBot') {
+                let dominoes = shuffle(createDominoes());
+                gameState.players[playerId] = { hand: dominoes.splice(0, 7) };
+                gameState.stock = dominoes;
+                gameState.players['bot'] = { hand: dominoes.splice(0, 7) };
+                gameState.turn = playerId;
+            }
+
             renderGame();
         }
 
         function renderGame() {
             gameBoard.innerHTML = gameState.board.map(d => new Domino(...d.values).html).join('');
-            playerHand.innerHTML = gameState.players[playerId].hand.map(d => d.html).join('');
-            statusDiv.innerText = `Turn: ${gameState.turn === playerId ? 'Your' : 'Opponent'} turn`;
+            playerHand.innerHTML = gameState.players[playerId]?.hand.map(d => d.html).join('') || '';
+            
+            if (gameState.turn) {
+                statusDiv.innerText = `Turn: ${gameState.turn === playerId ? 'Your' : 'Opponent'} turn`;
+            }
 
             if (gameState.turn === 'bot') {
                 setTimeout(botTurn, 1000);
@@ -184,7 +216,7 @@
         function placeDomino(domino, position) {
             if (gameState.turn !== playerId && gameState.gameMode === 'multiplayer') return;
 
-            const index = gameState.players[playerId].hand.findIndex(d => d.id === domino.id);
+            const index = gameState.players[playerId]?.hand.findIndex(d => d.id === domino.id);
             if (index === -1) return;
 
             if (gameState.board.length === 0 ||
@@ -217,15 +249,14 @@
             if (gameState.gameMode === 'multiplayer') {
                 gameRef.update({ turn: gameState.turn });
             }
+            renderGame();
         }
 
         // Event Listeners
         document.body.addEventListener('click', (e) => {
-            if (e.target.classList.contains('domino')) {
-                if (gameState.turn !== playerId) return;
-
+            if (e.target.classList.contains('domino') && gameState.turn === playerId) {
                 const dominoId = e.target.getAttribute('data-id');
-                const domino = gameState.players[playerId].hand.find(d => d.id === dominoId);
+                const domino = gameState.players[playerId]?.hand.find(d => d.id === dominoId);
 
                 if (domino) {
                     const position = confirm('Place left or right? (OK=Left, Cancel=Right)');
