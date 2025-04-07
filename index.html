@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobile Dominoes</title>
+    <title>Dominoes Game</title>
     <style>
-        body { 
+        body {
             margin: 0;
             padding: 20px;
             background: #f0f0f0;
             font-family: Arial, sans-serif;
             touch-action: manipulation;
         }
-        
+
         #game-container {
             max-width: 600px;
             margin: 0 auto;
         }
-        
+
         .domino {
             width: 80px;
             height: 160px;
@@ -29,23 +29,23 @@
             justify-content: space-around;
             align-items: center;
             margin: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             cursor: pointer;
             transition: transform 0.2s;
         }
-        
+
         .domino.selected {
             transform: scale(1.1);
             border-color: #ff6b6b;
         }
-        
+
         .board {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             margin: 20px 0;
         }
-        
+
         .player-hand {
             display: flex;
             overflow-x: auto;
@@ -53,19 +53,19 @@
             background: #e0e0e0;
             border-radius: 10px;
         }
-        
+
         .modal {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.5);
             display: flex;
             justify-content: center;
             align-items: center;
         }
-        
+
         .modal-content {
             background: white;
             padding: 20px;
@@ -73,7 +73,7 @@
             width: 90%;
             max-width: 400px;
         }
-        
+
         button {
             padding: 10px 20px;
             margin: 5px;
@@ -83,7 +83,7 @@
             border-radius: 5px;
             cursor: pointer;
         }
-        
+
         @media (max-width: 480px) {
             .domino {
                 width: 60px;
@@ -99,6 +99,9 @@
             <button onclick="startGame('vsBot')">Play vs Bot</button>
             <button onclick="startGame('multiplayer')">Multiplayer</button>
         </div>
+        <div id="scoreboard">
+            <p><strong>Score:</strong> You: <span id="player-score">0</span> | Opponent: <span id="opponent-score">0</span></p>
+        </div>
         <div id="game-board" class="board"></div>
         <div id="player-hand" class="player-hand"></div>
         <div id="status"></div>
@@ -110,7 +113,6 @@
     <script>
         // Your Firebase config here
         const firebaseConfig = {
-            
   apiKey: "AIzaSyCMxiBRciVQ9oKeiw3X9hxv_4BhDKABtgQ",
   authDomain: "web-site-ftw.firebaseapp.com",
   databaseURL: "https://web-site-ftw-default-rtdb.europe-west1.firebasedatabase.app",
@@ -131,7 +133,9 @@
             board: [],
             stock: [],
             turn: null,
-            gameMode: null
+            gameMode: null,
+            scores: { player: 0, opponent: 0 },
+            winner: null
         };
 
         // Game Logic
@@ -172,17 +176,19 @@
         function startGame(mode) {
             gameState.gameMode = mode;
             document.getElementById('game-mode-selection').style.display = 'none';
-            
+
             if (mode === 'multiplayer') {
                 currentGameRef = database.ref('games').push();
                 currentGameRef.set({
-                    players: {[currentPlayer]: {hand: [], score: 0}},
+                    players: { [currentPlayer]: { hand: [], score: 0 } },
                     board: [],
                     stock: [],
                     turn: null,
-                    status: 'waiting'
+                    status: 'waiting',
+                    scores: { player: 0, opponent: 0 },
+                    winner: null
                 });
-                
+
                 currentGameRef.on('value', (snapshot) => {
                     gameState = snapshot.val();
                     renderGame();
@@ -194,10 +200,10 @@
 
         function initializeLocalGame() {
             let dominoes = shuffle(createDominoes());
-            gameState.players[currentPlayer] = {hand: dominoes.splice(0, 7), score: 0};
+            gameState.players[currentPlayer] = { hand: dominoes.splice(0, 7), score: 0 };
             gameState.stock = dominoes;
             gameState.turn = currentPlayer;
-            gameState.players['bot'] = {hand: dominoes.splice(0, 7), score: 0};
+            gameState.players['bot'] = { hand: dominoes.splice(0, 7), score: 0 };
             renderGame();
         }
 
@@ -205,7 +211,9 @@
             document.getElementById('game-board').innerHTML = gameState.board.map(d => new Domino(...d.values).html).join('');
             document.getElementById('player-hand').innerHTML = gameState.players[currentPlayer].hand.map(d => d.html).join('');
             document.getElementById('status').innerText = `Turn: ${gameState.turn === currentPlayer ? 'Your' : 'Opponent'} turn`;
-            
+            document.getElementById('player-score').innerText = gameState.scores.player;
+            document.getElementById('opponent-score').innerText = gameState.scores.opponent;
+
             if (gameState.turn === 'bot') {
                 setTimeout(botTurn, 1000);
             }
@@ -213,9 +221,9 @@
 
         function botTurn() {
             const validMoves = gameState.players.bot.hand.filter(domino => {
-                return gameState.board.length === 0 || 
-                    domino.values.includes(gameState.board[0].values[0]) || 
-                    domino.values.includes(gameState.board[gameState.board.length-1].values[1]);
+                return gameState.board.length === 0 ||
+                    domino.values.includes(gameState.board[0].values[0]) ||
+                    domino.values.includes(gameState.board[gameState.board.length - 1].values[1]);
             });
 
             if (validMoves.length > 0) {
@@ -234,16 +242,16 @@
             const index = gameState.players[currentPlayer].hand.findIndex(d => d.id === domino.id);
             if (index === -1) return;
 
-            if (gameState.board.length === 0 || 
-                domino.values.includes(gameState.board[0].values[0]) || 
-                domino.values.includes(gameState.board[gameState.board.length-1].values[1])) {
-                
+            if (gameState.board.length === 0 ||
+                domino.values.includes(gameState.board[0].values[0]) ||
+                domino.values.includes(gameState.board[gameState.board.length - 1].values[1])) {
+
                 if (position === 'left') {
                     gameState.board.unshift(domino);
                 } else {
                     gameState.board.push(domino);
                 }
-                
+
                 gameState.players[currentPlayer].hand.splice(index, 1);
                 checkWinCondition();
                 nextTurn();
@@ -258,12 +266,12 @@
         }
 
         function nextTurn() {
-            gameState.turn = gameState.turn === currentPlayer ? 
-                (gameState.gameMode === 'multiplayer' ? Object.keys(gameState.players).find(p => p !== currentPlayer) : 'bot') : 
+            gameState.turn = gameState.turn === currentPlayer ?
+                (gameState.gameMode === 'multiplayer' ? Object.keys(gameState.players).find(p => p !== currentPlayer) : 'bot') :
                 currentPlayer;
-            
+
             if (gameState.gameMode === 'multiplayer') {
-                currentGameRef.update({turn: gameState.turn});
+                currentGameRef.update({ turn: gameState.turn });
             }
         }
 
@@ -275,7 +283,7 @@
 
         function endGame(winner) {
             alert(`${winner || 'No one'} wins!`);
-            gameState = { players: {}, board: [], stock: [], turn: null };
+            gameState = { players: {}, board: [], stock: [], turn: null, scores: { player: 0, opponent: 0 }, winner: null };
             document.getElementById('game-mode-selection').style.display = 'block';
         }
 
@@ -283,17 +291,17 @@
         document.body.addEventListener('click', (e) => {
             if (e.target.classList.contains('domino')) {
                 if (gameState.turn !== currentPlayer) return;
-                
+
                 const dominoId = e.target.getAttribute('data-id');
                 const domino = gameState.players[currentPlayer].hand.find(d => d.id === dominoId);
-                
+
                 if (domino) {
                     if (e.target.classList.contains('selected')) {
                         e.target.classList.remove('selected');
                     } else {
                         document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
                         e.target.classList.add('selected');
-                        
+
                         const position = confirm('Place left or right? (OK=Left, Cancel=Right)');
                         placeDomino(domino, position ? 'left' : 'right');
                     }
