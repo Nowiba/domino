@@ -94,7 +94,7 @@
 </head>
 <body>
     <div id="game-container">
-        <h1>Dominoes Mobile</h1>
+        <h1>Dominoes Game</h1>
         <div id="game-mode-selection">
             <button onclick="startGame('vsBot')">Play vs Bot</button>
             <button onclick="startGame('multiplayer')">Multiplayer</button>
@@ -113,14 +113,14 @@
     <script>
         // Your Firebase config here
         const firebaseConfig = {
-  apiKey: "AIzaSyCMxiBRciVQ9oKeiw3X9hxv_4BhDKABtgQ",
-  authDomain: "web-site-ftw.firebaseapp.com",
-  databaseURL: "https://web-site-ftw-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "web-site-ftw",
-  storageBucket: "web-site-ftw.firebasestorage.app",
-  messagingSenderId: "275070822133",
-  appId: "1:275070822133:web:f1fdc6c20b5af4690fc7bc",
-  measurementId: "G-PZ7JBGQWQE"
+            apiKey: "AIzaSyCMxiBRciVQ9oKeiw3X9hxv_4BhDKABtgQ",
+            authDomain: "web-site-ftw.firebaseapp.com",
+            databaseURL: "https://web-site-ftw-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "web-site-ftw",
+            storageBucket: "web-site-ftw.firebasestorage.app",
+            messagingSenderId: "275070822133",
+            appId: "1:275070822133:web:f1fdc6c20b5af4690fc7bc",
+            measurementId: "G-PZ7JBGQWQE"
         };
 
         // Initialize Firebase
@@ -137,6 +137,14 @@
             scores: { player: 0, opponent: 0 },
             winner: null
         };
+
+        // DOM Elements
+        const gameContainer = document.getElementById('game-container');
+        const gameBoard = document.getElementById('game-board');
+        const playerHand = document.getElementById('player-hand');
+        const statusDiv = document.getElementById('status');
+        const playerScore = document.getElementById('player-score');
+        const opponentScore = document.getElementById('opponent-score');
 
         // Game Logic
         class Domino {
@@ -208,11 +216,11 @@
         }
 
         function renderGame() {
-            document.getElementById('game-board').innerHTML = gameState.board.map(d => new Domino(...d.values).html).join('');
-            document.getElementById('player-hand').innerHTML = gameState.players[currentPlayer].hand.map(d => d.html).join('');
-            document.getElementById('status').innerText = `Turn: ${gameState.turn === currentPlayer ? 'Your' : 'Opponent'} turn`;
-            document.getElementById('player-score').innerText = gameState.scores.player;
-            document.getElementById('opponent-score').innerText = gameState.scores.opponent;
+            gameBoard.innerHTML = gameState.board.map(d => new Domino(...d.values).html).join('');
+            playerHand.innerHTML = gameState.players[currentPlayer].hand.map(d => d.html).join('');
+            statusDiv.innerText = `Turn: ${gameState.turn === currentPlayer ? 'Your' : 'Opponent'} turn`;
+            playerScore.innerText = gameState.scores.player;
+            opponentScore.innerText = gameState.scores.opponent;
 
             if (gameState.turn === 'bot') {
                 setTimeout(botTurn, 1000);
