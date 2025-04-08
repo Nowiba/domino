@@ -3,63 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Domino Game</title>
+    <title>Runner Game</title>
     <style>
         body {
+            margin: 0;
             font-family: Arial, sans-serif;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
             height: 100vh;
-            margin: 0;
-            background-color: #4CAF50;
+            background-color: #f0f0f0;
         }
 
         #game-container {
-            width: 100%;
-            max-width: 600px;
-            text-align: center;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        #board {
-            border: 2px solid #ccc;
-            padding: 20px;
-            margin-bottom: 20px;
-            min-height: 200px;
             position: relative;
-            background-color: #f0f0f0;
-            border-radius: 5px;
-        }
-
-        .tile {
-            display: inline-block;
-            width: 40px;
-            height: 80px;
-            line-height: 80px;
-            border: 1px solid #000;
-            margin: 5px;
-            text-align: center;
-            font-size: 24px;
-            background-color: #fff;
-            border-radius: 5px;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-        }
-
-        #player-hand {
+            width: 100%;
+            max-width: 400px;
+            height: 600px;
+            overflow: hidden;
             border: 2px solid #ccc;
-            padding: 20px;
-            margin-bottom: 20px;
-            background-color: #f0f0f0;
-            border-radius: 5px;
+            background-color: #fff;
+        }
+
+        #runner {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            width: 40px;
+            height: 60px;
+            background-color: red;
+            transform: translateX(-50%);
+        }
+
+        #obstacle {
+            position: absolute;
+            bottom: 20px;
+            right: 0;
+            width: 30px;
+            height: 30px;
+            background-color: black;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
         }
 
         #controls button {
-            padding: 10px 20px;
-            margin: 5px;
+            padding: 10px;
             font-size: 16px;
             background-color: #4CAF50;
             color: white;
@@ -67,169 +62,94 @@
             border-radius: 5px;
             cursor: pointer;
         }
-
-        #controls button:hover {
-            background-color: #45a049;
-        }
-
-        #game-modes {
-            margin-bottom: 20px;
-        }
-
-        #game-modes label {
-            margin-right: 10px;
-        }
     </style>
 </head>
 <body>
     <div id="game-container">
-        <div id="game-modes">
-            <label>
-                <input type="radio" name="mode" value="classic" checked> Classic
-            </label>
-            <label>
-                <input type="radio" name="mode" value="time-attack"> Time Attack
-            </label>
-            <label>
-                <input type="radio" name="mode" value="mexican-train"> Mexican Train
-            </label>
-        </div>
-        <div id="board"></div>
-        <div id="player-hand"></div>
+        <div id="runner"></div>
+        <div id="obstacle"></div>
         <div id="controls">
-            <button id="start-game">Start Game</button>
+            <button id="jump-btn">Jump</button>
+            <button id="left-btn">Left</button>
+            <button id="right-btn">Right</button>
         </div>
     </div>
 
     <script>
-        // DOM Elements
-        const board = document.getElementById('board');
-        const playerHand = document.getElementById('player-hand');
-        const startGameButton = document.getElementById('start-game');
-        const gameModes = document.getElementsByName('mode');
+        const runner = document.getElementById('runner');
+        const obstacle = document.getElementById('obstacle');
+        const jumpButton = document.getElementById('jump-btn');
+        const leftButton = document.getElementById('left-btn');
+        const rightButton = document.getElementById('right-btn');
 
-        // Game State
-        let gameId = null;
-        let playerId = 'player_1';
-        let botId = 'bot_1';
-        let gameMode = 'classic';
-        let currentPlayer = playerId;
+        let isJumping = false;
+        let position = 0;
+        let gravity = 0.9;
+        let speed = 5;
 
-        // Start a new game
-        startGameButton.addEventListener('click', () => {
-            console.log("Start Game button clicked");
-            gameId = `game_${Math.random().toString(36).substr(2, 9)}`;
-
-            for (let mode of gameModes) {
-                if (mode.checked) {
-                    gameMode = mode.value;
-                    break;
-                }
+        function control(e) {
+            if (e.keyCode === 32) { // Space bar
+                if (!isJumping) jump();
+            } else if (e.keyCode === 37) { // Left arrow
+                moveLeft();
+            } else if (e.keyCode === 39) { // Right arrow
+                moveRight();
             }
+        }
 
-            const gameState = {
-                players: { [playerId]: true, [botId]: true },
-                board: [],
-                hands: { [playerId]: generateHand(), [botId]: generateHand() },
-                mode: gameMode,
-                currentTurn: playerId
-            };
+        document.addEventListener('keyup', control);
 
-            document.cookie = `game_${gameId}=${JSON.stringify(gameState)}; path=/`;
-            alert(`Game Started! Mode: ${gameMode}`);
-            loadGameState(gameId);
-            playBotTurn();
+        jumpButton.addEventListener('click', () => {
+            if (!isJumping) jump();
         });
 
-        // Load game state from cookies
-        function loadGameState(gameId) {
-            const gameState = getGameStateFromCookie(gameId);
-            if (gameState) {
-                console.log("Game state loaded:", gameState);
-                updateBoard(gameState.board);
-                updatePlayerHand(gameState.hands[playerId]);
-                currentPlayer = gameState.currentTurn;
-            }
-        }
+        leftButton.addEventListener('click', moveLeft);
+        rightButton.addEventListener('click', moveRight);
 
-        // Get game state from cookies
-        function getGameStateFromCookie(gameId) {
-            const name = `game_${gameId}=`;
-            const decodedCookie = decodeURIComponent(document.cookie);
-            const cookieArray = decodedCookie.split(';');
-            for (let i = 0; i < cookieArray.length; i++) {
-                let cookie = cookieArray[i].trim();
-                if (cookie.indexOf(name) === 0) {
-                    return JSON.parse(cookie.substring(name.length, cookie.length));
+        function jump() {
+            isJumping = true;
+            let upInterval = setInterval(() => {
+                if (position >= 150) {
+                    clearInterval(upInterval);
+                    let downInterval = setInterval(() => {
+                        if (position <= 0) {
+                            clearInterval(downInterval);
+                            isJumping = false;
+                        }
+                        position -= 5;
+                        position = position * gravity;
+                        runner.style.bottom = position + 'px';
+                    }, 20);
                 }
-            }
-            return null;
+                position += 30;
+                position = position * gravity;
+                runner.style.bottom = position + 'px';
+            }, 20);
         }
 
-        // Update the board display
-        function updateBoard(boardState) {
-            board.innerHTML = '';
-            boardState.forEach(tile => {
-                const tileElement = document.createElement('div');
-                tileElement.className = 'tile';
-                tileElement.textContent = tile;
-                board.appendChild(tileElement);
-            });
-        }
-
-        // Update the player's hand display
-        function updatePlayerHand(hand) {
-            playerHand.innerHTML = '';
-            hand.forEach(tile => {
-                const tileElement = document.createElement('div');
-                tileElement.className = 'tile';
-                tileElement.textContent = tile;
-                tileElement.addEventListener('click', () => playTile(tile));
-                playerHand.appendChild(tileElement);
-            });
-        }
-
-        // Generate a hand of tiles
-        function generateHand() {
-            const hand = [];
-            for (let i = 0; i < 7; i++) {
-                hand.push(`${Math.floor(Math.random() * 7)}|${Math.floor(Math.random() * 7)}`);
-            }
-            return hand;
-        }
-
-        // Play a tile from the player's hand
-        function playTile(tile) {
-            if (currentPlayer === playerId) {
-                const gameState = getGameStateFromCookie(gameId);
-                if (gameState) {
-                    gameState.board.push(tile);
-                    gameState.hands[playerId] = gameState.hands[playerId].filter(t => t !== tile);
-                    gameState.currentTurn = botId;
-                    document.cookie = `game_${gameId}=${JSON.stringify(gameState)}; path=/`;
-                    loadGameState(gameId);
-                    playBotTurn();
-                }
+        function moveLeft() {
+            const left = parseInt(window.getComputedStyle(runner).getPropertyValue('left'));
+            if (left > 0) {
+                runner.style.left = left - speed + 'px';
             }
         }
 
-        // Bot plays a turn
-        function playBotTurn() {
-            if (currentPlayer === botId) {
-                const gameState = getGameStateFromCookie(gameId);
-                if (gameState) {
-                    const botHand = gameState.hands[botId];
-                    if (botHand.length > 0) {
-                        const tile = botHand[Math.floor(Math.random() * botHand.length)];
-                        gameState.board.push(tile);
-                        gameState.hands[botId] = botHand.filter(t => t !== tile);
-                        gameState.currentTurn = playerId;
-                        document.cookie = `game_${gameId}=${JSON.stringify(gameState)}; path=/`;
-                        loadGameState(gameId);
-                    }
-                }
+        function moveRight() {
+            const left = parseInt(window.getComputedStyle(runner).getPropertyValue('left'));
+            if (left < 360) {
+                runner.style.left = left + speed + 'px';
             }
         }
+
+        function gameLoop() {
+            const obstacleLeft = parseInt(window.getComputedStyle(obstacle).getPropertyValue('left'));
+            if (obstacleLeft > 0 && obstacleLeft < 40 && position < 50) {
+                alert('Game Over!');
+                obstacle.style.animation = 'none';
+            }
+        }
+
+        setInterval(gameLoop, 10);
     </script>
 </body>
 </html>
