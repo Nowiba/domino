@@ -12,7 +12,7 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #f0f0f0;
+            background-color: #4CAF50;
         }
 
         #game-container {
@@ -20,6 +20,9 @@
             max-width: 600px;
             text-align: center;
             padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
         #board {
@@ -28,6 +31,8 @@
             margin-bottom: 20px;
             min-height: 200px;
             position: relative;
+            background-color: #f0f0f0;
+            border-radius: 5px;
         }
 
         .tile {
@@ -39,28 +44,60 @@
             margin: 5px;
             text-align: center;
             font-size: 24px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
         }
 
         #player-hand {
             border: 2px solid #ccc;
             padding: 20px;
             margin-bottom: 20px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
         }
 
         #controls button {
             padding: 10px 20px;
             margin: 5px;
             font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #controls button:hover {
+            background-color: #45a049;
+        }
+
+        #game-modes {
+            margin-bottom: 20px;
+        }
+
+        #game-modes label {
+            margin-right: 10px;
         }
     </style>
 </head>
 <body>
     <div id="game-container">
+        <div id="game-modes">
+            <label>
+                <input type="radio" name="mode" value="classic" checked> Classic
+            </label>
+            <label>
+                <input type="radio" name="mode" value="time-attack"> Time Attack
+            </label>
+            <label>
+                <input type="radio" name="mode" value="mexican-train"> Mexican Train
+            </label>
+        </div>
         <div id="board"></div>
         <div id="player-hand"></div>
         <div id="controls">
-            <button id="create-game">Create Game</button>
-            <button id="join-game">Join Game</button>
+            <button id="start-game">Start Game</button>
         </div>
     </div>
 
@@ -68,49 +105,40 @@
         // DOM Elements
         const board = document.getElementById('board');
         const playerHand = document.getElementById('player-hand');
-        const createGameButton = document.getElementById('create-game');
-        const joinGameButton = document.getElementById('join-game');
+        const startGameButton = document.getElementById('start-game');
+        const gameModes = document.getElementsByName('mode');
 
         // Game State
         let gameId = null;
-        let playerId = null;
+        let playerId = 'player_1';
+        let botId = 'bot_1';
+        let gameMode = 'classic';
+        let currentPlayer = playerId;
 
-        // Create a new game
-        createGameButton.addEventListener('click', () => {
-            console.log("Create Game button clicked");
+        // Start a new game
+        startGameButton.addEventListener('click', () => {
+            console.log("Start Game button clicked");
             gameId = `game_${Math.random().toString(36).substr(2, 9)}`;
-            playerId = `player_${Math.random().toString(36).substr(2, 9)}`;
+
+            for (let mode of gameModes) {
+                if (mode.checked) {
+                    gameMode = mode.value;
+                    break;
+                }
+            }
 
             const gameState = {
-                players: { [playerId]: true },
+                players: { [playerId]: true, [botId]: true },
                 board: [],
-                hands: { [playerId]: generateHand() }
+                hands: { [playerId]: generateHand(), [botId]: generateHand() },
+                mode: gameMode,
+                currentTurn: playerId
             };
 
             document.cookie = `game_${gameId}=${JSON.stringify(gameState)}; path=/`;
-            alert(`Game Created! ID: ${gameId}`);
+            alert(`Game Started! Mode: ${gameMode}`);
             loadGameState(gameId);
-        });
-
-        // Join an existing game
-        joinGameButton.addEventListener('click', () => {
-            console.log("Join Game button clicked");
-            const gameIdToJoin = prompt("Enter Game ID to join:");
-            if (gameIdToJoin) {
-                gameId = gameIdToJoin;
-                playerId = `player_${Math.random().toString(36).substr(2, 9)}`;
-
-                const gameState = getGameStateFromCookie(gameId);
-                if (gameState) {
-                    gameState.players[playerId] = true;
-                    gameState.hands[playerId] = generateHand();
-                    document.cookie = `game_${gameId}=${JSON.stringify(gameState)}; path=/`;
-                    alert(`Joined Game! ID: ${gameId}`);
-                    loadGameState(gameId);
-                } else {
-                    alert("Game not found!");
-                }
-            }
+            playBotTurn();
         });
 
         // Load game state from cookies
@@ -120,6 +148,7 @@
                 console.log("Game state loaded:", gameState);
                 updateBoard(gameState.board);
                 updatePlayerHand(gameState.hands[playerId]);
+                currentPlayer = gameState.currentTurn;
             }
         }
 
@@ -155,6 +184,7 @@
                 const tileElement = document.createElement('div');
                 tileElement.className = 'tile';
                 tileElement.textContent = tile;
+                tileElement.addEventListener('click', () => playTile(tile));
                 playerHand.appendChild(tileElement);
             });
         }
@@ -166,6 +196,39 @@
                 hand.push(`${Math.floor(Math.random() * 7)}|${Math.floor(Math.random() * 7)}`);
             }
             return hand;
+        }
+
+        // Play a tile from the player's hand
+        function playTile(tile) {
+            if (currentPlayer === playerId) {
+                const gameState = getGameStateFromCookie(gameId);
+                if (gameState) {
+                    gameState.board.push(tile);
+                    gameState.hands[playerId] = gameState.hands[playerId].filter(t => t !== tile);
+                    gameState.currentTurn = botId;
+                    document.cookie = `game_${gameId}=${JSON.stringify(gameState)}; path=/`;
+                    loadGameState(gameId);
+                    playBotTurn();
+                }
+            }
+        }
+
+        // Bot plays a turn
+        function playBotTurn() {
+            if (currentPlayer === botId) {
+                const gameState = getGameStateFromCookie(gameId);
+                if (gameState) {
+                    const botHand = gameState.hands[botId];
+                    if (botHand.length > 0) {
+                        const tile = botHand[Math.floor(Math.random() * botHand.length)];
+                        gameState.board.push(tile);
+                        gameState.hands[botId] = botHand.filter(t => t !== tile);
+                        gameState.currentTurn = playerId;
+                        document.cookie = `game_${gameId}=${JSON.stringify(gameState)}; path=/`;
+                        loadGameState(gameId);
+                    }
+                }
+            }
         }
     </script>
 </body>
