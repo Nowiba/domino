@@ -99,25 +99,35 @@
 
         // Create a new game
         createGameButton.addEventListener('click', () => {
+            console.log("Create Game button clicked");
             gameId = `game_${Math.random().toString(36).substr(2, 9)}`;
             playerId = `player_${Math.random().toString(36).substr(2, 9)}`;
             set(ref(database, `games/${gameId}`), {
                 players: { [playerId]: true },
                 board: [],
                 hands: { [playerId]: [] }
+            }).then(() => {
+                console.log("Game created successfully");
+                alert(`Game Created! ID: ${gameId}`);
+            }).catch((error) => {
+                console.error("Error creating game:", error);
             });
-            alert(`Game Created! ID: ${gameId}`);
         });
 
         // Join an existing game
         joinGameButton.addEventListener('click', () => {
+            console.log("Join Game button clicked");
             const gameIdToJoin = prompt("Enter Game ID to join:");
             if (gameIdToJoin) {
                 gameId = gameIdToJoin;
                 playerId = `player_${Math.random().toString(36).substr(2, 9)}`;
                 const gameRef = ref(database, `games/${gameId}/players/${playerId}`);
-                set(gameRef, true);
-                alert(`Joined Game! ID: ${gameId}`);
+                set(gameRef, true).then(() => {
+                    console.log("Joined game successfully");
+                    alert(`Joined Game! ID: ${gameId}`);
+                }).catch((error) => {
+                    console.error("Error joining game:", error);
+                });
             }
         });
 
@@ -128,6 +138,7 @@
                 onValue(gameRef, (snapshot) => {
                     const data = snapshot.val();
                     if (data) {
+                        console.log("Game state updated:", data);
                         updateBoard(data.board);
                         updatePlayerHand(data.hands[playerId]);
                     }
