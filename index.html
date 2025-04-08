@@ -3,153 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Runner Game</title>
+    <title>Calculator</title>
     <style>
         body {
-            margin: 0;
-            font-family: Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
+            margin: 0;
             background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
         }
 
-        #game-container {
-            position: relative;
-            width: 100%;
-            max-width: 400px;
-            height: 600px;
+        .calculator {
+            border-radius: 10px;
             overflow: hidden;
-            border: 2px solid #ccc;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .display {
+            width: 100%;
+            padding: 20px;
+            background-color: #333;
+            color: white;
+            text-align: right;
+            font-size: 2em;
+            box-sizing: border-box;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+        }
+
+        .buttons button {
+            padding: 20px;
+            font-size: 1.5em;
+            border: none;
             background-color: #fff;
+            cursor: pointer;
+            outline: none;
         }
 
-        #runner {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            width: 40px;
-            height: 60px;
-            background-color: red;
-            transform: translateX(-50%);
+        .buttons button:active {
+            background-color: #ddd;
         }
 
-        #obstacle {
-            position: absolute;
-            bottom: 20px;
-            right: 0;
-            width: 30px;
-            height: 30px;
-            background-color: black;
+        .buttons .operator {
+            background-color: #f09235;
+            color: white;
         }
 
-        #controls {
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 10px;
-        }
-
-        #controls button {
-            padding: 10px;
-            font-size: 16px;
+        .buttons .equal {
             background-color: #4CAF50;
             color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+            grid-column: span 4;
         }
     </style>
 </head>
 <body>
-    <div id="game-container">
-        <div id="runner"></div>
-        <div id="obstacle"></div>
-        <div id="controls">
-            <button id="jump-btn">Jump</button>
-            <button id="left-btn">Left</button>
-            <button id="right-btn">Right</button>
+    <div class="calculator">
+        <div class="display" id="display">0</div>
+        <div class="buttons">
+            <button class="operator" onclick="clearDisplay()">C</button>
+            <button class="operator" onclick="appendOperator('/')">/</button>
+            <button class="operator" onclick="appendOperator('*')">*</button>
+            <button class="operator" onclick="appendOperator('-')">-</button>
+            <button onclick="appendNumber(7)">7</button>
+            <button onclick="appendNumber(8)">8</button>
+            <button onclick="appendNumber(9)">9</button>
+            <button class="operator" onclick="appendOperator('+')">+</button>
+            <button onclick="appendNumber(4)">4</button>
+            <button onclick="appendNumber(5)">5</button>
+            <button onclick="appendNumber(6)">6</button>
+            <button class="operator" onclick="appendOperator('%')">%</button>
+            <button onclick="appendNumber(1)">1</button>
+            <button onclick="appendNumber(2)">2</button>
+            <button onclick="appendNumber(3)">3</button>
+            <button class="operator" onclick="calculateResult()">=</button>
+            <button onclick="appendNumber(0)">0</button>
+            <button onclick="appendDecimal()">.</button>
         </div>
     </div>
 
     <script>
-        const runner = document.getElementById('runner');
-        const obstacle = document.getElementById('obstacle');
-        const jumpButton = document.getElementById('jump-btn');
-        const leftButton = document.getElementById('left-btn');
-        const rightButton = document.getElementById('right-btn');
+        let display = document.getElementById('display');
+        let currentInput = '';
 
-        let isJumping = false;
-        let position = 0;
-        let gravity = 0.9;
-        let speed = 5;
+        function updateDisplay() {
+            display.textContent = currentInput || '0';
+        }
 
-        function control(e) {
-            if (e.keyCode === 32) { // Space bar
-                if (!isJumping) jump();
-            } else if (e.keyCode === 37) { // Left arrow
-                moveLeft();
-            } else if (e.keyCode === 39) { // Right arrow
-                moveRight();
+        function appendNumber(number) {
+            currentInput += number;
+            updateDisplay();
+        }
+
+        function appendDecimal() {
+            if (!currentInput.includes('.')) {
+                currentInput += '.';
+                updateDisplay();
             }
         }
 
-        document.addEventListener('keyup', control);
-
-        jumpButton.addEventListener('click', () => {
-            if (!isJumping) jump();
-        });
-
-        leftButton.addEventListener('click', moveLeft);
-        rightButton.addEventListener('click', moveRight);
-
-        function jump() {
-            isJumping = true;
-            let upInterval = setInterval(() => {
-                if (position >= 150) {
-                    clearInterval(upInterval);
-                    let downInterval = setInterval(() => {
-                        if (position <= 0) {
-                            clearInterval(downInterval);
-                            isJumping = false;
-                        }
-                        position -= 5;
-                        position = position * gravity;
-                        runner.style.bottom = position + 'px';
-                    }, 20);
-                }
-                position += 30;
-                position = position * gravity;
-                runner.style.bottom = position + 'px';
-            }, 20);
-        }
-
-        function moveLeft() {
-            const left = parseInt(window.getComputedStyle(runner).getPropertyValue('left'));
-            if (left > 0) {
-                runner.style.left = left - speed + 'px';
+        function appendOperator(operator) {
+            if (currentInput !== '') {
+                currentInput += operator;
+                updateDisplay();
             }
         }
 
-        function moveRight() {
-            const left = parseInt(window.getComputedStyle(runner).getPropertyValue('left'));
-            if (left < 360) {
-                runner.style.left = left + speed + 'px';
-            }
+        function clearDisplay() {
+            currentInput = '';
+            updateDisplay();
         }
 
-        function gameLoop() {
-            const obstacleLeft = parseInt(window.getComputedStyle(obstacle).getPropertyValue('left'));
-            if (obstacleLeft > 0 && obstacleLeft < 40 && position < 50) {
-                alert('Game Over!');
-                obstacle.style.animation = 'none';
+        function calculateResult() {
+            try {
+                currentInput = eval(currentInput).toString();
+                updateDisplay();
+            } catch {
+                currentInput = 'Error';
+                updateDisplay();
             }
         }
-
-        setInterval(gameLoop, 10);
     </script>
 </body>
 </html>
