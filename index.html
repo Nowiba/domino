@@ -53,8 +53,6 @@
             font-size: 16px;
         }
     </style>
-    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js"></script>
 </head>
 <body>
     <div id="game-container">
@@ -67,26 +65,6 @@
     </div>
 
     <script>
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
-
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-          apiKey: "AIzaSyCMxiBRciVQ9oKeiw3X9hxv_4BhDKABtgQ",
-          authDomain: "web-site-ftw.firebaseapp.com",
-          databaseURL: "https://web-site-ftw-default-rtdb.europe-west1.firebasedatabase.app",
-          projectId: "web-site-ftw",
-          storageBucket: "web-site-ftw.firebasestorage.app",
-          messagingSenderId: "275070822133",
-          appId: "1:275070822133:web:f1fdc6c20b5af4690fc7bc",
-          measurementId: "G-PZ7JBGQWQE"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-
         // DOM Elements
         const board = document.getElementById('board');
         const playerHand = document.getElementById('player-hand');
@@ -102,16 +80,16 @@
             console.log("Create Game button clicked");
             gameId = `game_${Math.random().toString(36).substr(2, 9)}`;
             playerId = `player_${Math.random().toString(36).substr(2, 9)}`;
-            set(ref(database, `games/${gameId}`), {
+
+            const gameState = {
                 players: { [playerId]: true },
                 board: [],
-                hands: { [playerId]: [] }
-            }).then(() => {
-                console.log("Game created successfully");
-                alert(`Game Created! ID: ${gameId}`);
-            }).catch((error) => {
-                console.error("Error creating game:", error);
-            });
+                hands: { [playerId]: generateHand() }
+            };
+
+            document.cookie = `game_${gameId}=${JSON.stringify(gameState)}; path=/`;
+            alert(`Game Created! ID: ${gameId}`);
+            loadGameState(gameId);
         });
 
         // Join an existing game
@@ -121,29 +99,42 @@
             if (gameIdToJoin) {
                 gameId = gameIdToJoin;
                 playerId = `player_${Math.random().toString(36).substr(2, 9)}`;
-                const gameRef = ref(database, `games/${gameId}/players/${playerId}`);
-                set(gameRef, true).then(() => {
-                    console.log("Joined game successfully");
+
+                const gameState = getGameStateFromCookie(gameId);
+                if (gameState) {
+                    gameState.players[playerId] = true;
+                    gameState.hands[playerId] = generateHand();
+                    document.cookie = `game_${gameId}=${JSON.stringify(gameState)}; path=/`;
                     alert(`Joined Game! ID: ${gameId}`);
-                }).catch((error) => {
-                    console.error("Error joining game:", error);
-                });
+                    loadGameState(gameId);
+                } else {
+                    alert("Game not found!");
+                }
             }
         });
 
-        // Listen for game state changes
-        function listenForGameUpdates() {
-            if (gameId) {
-                const gameRef = ref(database, `games/${gameId}`);
-                onValue(gameRef, (snapshot) => {
-                    const data = snapshot.val();
-                    if (data) {
-                        console.log("Game state updated:", data);
-                        updateBoard(data.board);
-                        updatePlayerHand(data.hands[playerId]);
-                    }
-                });
+        // Load game state from cookies
+        function loadGameState(gameId) {
+            const gameState = getGameStateFromCookie(gameId);
+            if (gameState) {
+                console.log("Game state loaded:", gameState);
+                updateBoard(gameState.board);
+                updatePlayerHand(gameState.hands[playerId]);
             }
+        }
+
+        // Get game state from cookies
+        function getGameStateFromCookie(gameId) {
+            const name = `game_${gameId}=`;
+            const decodedCookie = decodeURIComponent(document.cookie);
+            const cookieArray = decodedCookie.split(';');
+            for (let i = 0; i < cookieArray.length; i++) {
+                let cookie = cookieArray[i].trim();
+                if (cookie.indexOf(name) === 0) {
+                    return JSON.parse(cookie.substring(name.length, cookie.length));
+                }
+            }
+            return null;
         }
 
         // Update the board display
@@ -168,8 +159,14 @@
             });
         }
 
-        // Start listening for updates
-        listenForGameUpdates();
+        // Generate a hand of tiles
+        function generateHand() {
+            const hand = [];
+            for (let i = 0; i < 7; i++) {
+                hand.push(`${Math.floor(Math.random() * 7)}|${Math.floor(Math.random() * 7)}`);
+            }
+            return hand;
+        }
     </script>
 </body>
 </html>
