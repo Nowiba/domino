@@ -8,7 +8,7 @@
         body {
             font-family: Arial, sans-serif;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             height: 100vh;
             margin: 0;
@@ -16,7 +16,10 @@
         }
 
         #game-container {
+            width: 100%;
+            max-width: 600px;
             text-align: center;
+            padding: 20px;
         }
 
         #language-selector {
@@ -27,6 +30,20 @@
             border: 2px solid #ccc;
             padding: 20px;
             margin-bottom: 20px;
+            min-height: 200px;
+            position: relative;
+        }
+
+        .tile {
+            display: inline-block;
+            width: 40px;
+            height: 80px;
+            line-height: 80px;
+            border: 1px solid #000;
+            margin: 5px;
+            text-align: center;
+            font-size: 24px;
+            transition: transform 0.3s;
         }
 
         #player-hand {
@@ -39,6 +56,34 @@
             padding: 10px 20px;
             margin: 5px;
             font-size: 16px;
+        }
+
+        #chat {
+            border: 2px solid #ccc;
+            padding: 20px;
+            height: 150px;
+            overflow-y: scroll;
+            margin-bottom: 20px;
+        }
+
+        #chat-input {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        #send-message {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+
+        @media (max-width: 720px) {
+            .tile {
+                width: 30px;
+                height: 60px;
+                line-height: 60px;
+                font-size: 18px;
+            }
         }
     </style>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app.js"></script>
@@ -60,13 +105,18 @@
         <div id="controls">
             <button id="create-game">Create Game</button>
             <button id="join-game">Join Game</button>
+            <button id="draw-tile">Draw Tile</button>
+            <button id="pass-turn">Pass Turn</button>
         </div>
+        <div id="chat"></div>
+        <input type="text" id="chat-input" placeholder="Type a message...">
+        <button id="send-message">Send</button>
     </div>
 
     <script>
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
+        import { getDatabase, ref, set, onValue, push, update } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -89,20 +139,32 @@
         const playerHand = document.getElementById('player-hand');
         const createGameButton = document.getElementById('create-game');
         const joinGameButton = document.getElementById('join-game');
+        const drawTileButton = document.getElementById('draw-tile');
+        const passTurnButton = document.getElementById('pass-turn');
+        const chatBox = document.getElementById('chat');
+        const chatInput = document.getElementById('chat-input');
+        const sendMessageButton = document.getElementById('send-message');
         const languageSelector = document.getElementById('language');
 
         // Game State
         let gameId = null;
         let playerId = null;
+        let currentPlayer = null;
+        let gameMode = 'classic';
 
         // Create a new game
         createGameButton.addEventListener('click', () => {
             gameId = `game_${Math.random().toString(36).substr(2, 9)}`;
             playerId = `player_${Math.random().toString(36).substr(2, 9)}`;
+            currentPlayer = playerId;
             set(ref(database, `games/${gameId}`), {
                 players: { [playerId]: true },
                 board: [],
-                hands: { [playerId]: [] }
+                hands: { [playerId]: generateHand() },
+                drawPile: generateDrawPile(),
+                currentTurn: playerId,
+                mode: gameMode,
+                chat: []
             });
             alert(translate('gameCreated') + ` ID: ${gameId}`);
         });
@@ -115,7 +177,56 @@
                 playerId = `player_${Math.random().toString(36).substr(2, 9)}`;
                 const gameRef = ref(database, `games/${gameId}/players/${playerId}`);
                 set(gameRef, true);
+                const handRef = ref(database, `games/${gameId}/hands/${playerId}`);
+                set(handRef, generateHand());
                 alert(translate('joinedGame') + ` ID: ${gameId}`);
+            }
+        });
+
+        // Draw a tile
+        drawTileButton.addEventListener('click', () => {
+            if (gameId && playerId && currentPlayer === playerId) {
+                const drawPileRef = ref(database, `games/${gameId}/drawPile`);
+                onValue(drawPileRef, (snapshot) => {
+                    const drawPile = snapshot.val();
+                    if (drawPile.length > 0) {
+                        const tile = drawPile.pop();
+                        const handRef = ref(database, `games/${gameId}/hands/${playerId}`);
+                        onValue(handRef, (snapshot) => {
+                            const hand = snapshot.val();
+                            hand.push(tile);
+                            update(ref(database, `games/${gameId}`), {
+                                drawPile,
+                                hands: { [playerId]: hand }
+                            });
+                        });
+                    }
+                });
+            }
+        });
+
+        // Pass turn
+        passTurnButton.addEventListener('click', () => {
+            if (gameId && playerId && currentPlayer === playerId) {
+                const gameRef = ref(database, `games/${gameId}`);
+                onValue(gameRef, (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        const players = Object.keys(data.players);
+                        const currentIndex = players.indexOf(currentPlayer);
+                        const nextPlayer = players[(currentIndex + 1) % players.length];
+                        update(gameRef, { currentTurn: nextPlayer });
+                    }
+                });
+            }
+        });
+
+        // Send chat message
+        sendMessageButton.addEventListener('click', () => {
+            if (gameId && playerId && chatInput.value) {
+                const message = { player: playerId, text: chatInput.value, timestamp: new Date().toISOString() };
+                push(ref(database, `games/${gameId}/chat`), message);
+                chatInput.value = '';
             }
         });
 
@@ -128,6 +239,8 @@
                     if (data) {
                         updateBoard(data.board);
                         updatePlayerHand(data.hands[playerId]);
+                        updateChat(data.chat);
+                        currentPlayer = data.currentTurn;
                     }
                 });
             }
@@ -135,12 +248,53 @@
 
         // Update the board display
         function updateBoard(boardState) {
-            board.innerHTML = `${translate('board')}: ${boardState.join(', ')}`;
+            board.innerHTML = '';
+            boardState.forEach(tile => {
+                const tileElement = document.createElement('div');
+                tileElement.className = 'tile';
+                tileElement.textContent = tile;
+                board.appendChild(tileElement);
+            });
         }
 
         // Update the player's hand display
         function updatePlayerHand(hand) {
-            playerHand.innerHTML = `${translate('yourHand')}: ${hand.join(', ')}`;
+            playerHand.innerHTML = '';
+            hand.forEach(tile => {
+                const tileElement = document.createElement('div');
+                tileElement.className = 'tile';
+                tileElement.textContent = tile;
+                playerHand.appendChild(tileElement);
+            });
+        }
+
+        // Update the chat display
+        function updateChat(chat) {
+            chatBox.innerHTML = '';
+            chat.forEach(message => {
+                const messageElement = document.createElement('div');
+                messageElement.textContent = `${message.player}: ${message.text}`;
+                chatBox.appendChild(messageElement);
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Generate a hand of tiles
+        function generateHand() {
+            const hand = [];
+            for (let i = 0; i < 7; i++) {
+                hand.push(`${Math.floor(Math.random() * 7)}|${Math.floor(Math.random() * 7)}`);
+            }
+            return hand;
+        }
+
+        // Generate the draw pile
+        function generateDrawPile() {
+            const drawPile = [];
+            for (let i = 0; i < 28; i++) {
+                drawPile.push(`${Math.floor(Math.random() * 7)}|${Math.floor(Math.random() * 7)}`);
+            }
+            return drawPile;
         }
 
         // Start listening for updates
@@ -163,21 +317,30 @@
                 enterGameId: "Enter Game ID to join:",
                 joinedGame: "Joined Game!",
                 board: "Board",
-                yourHand: "Your Hand"
+                yourHand: "Your Hand",
+                drawTile: "Draw Tile",
+                passTurn: "Pass Turn",
+                send: "Send"
             },
             fr: {
                 gameCreated: "Partie créée !",
                 enterGameId: "Entrez l'ID de la partie à rejoindre :",
                 joinedGame: "Partie rejointe !",
                 board: "Plateau",
-                yourHand: "Votre Main"
+                yourHand: "Votre Main",
+                drawTile: "Piocher une tuile",
+                passTurn: "Passer le tour",
+                send: "Envoyer"
             },
             es: {
                 gameCreated: "¡Juego creado!",
                 enterGameId: "Ingrese el ID del juego para unirse:",
                 joinedGame: "¡Juego unido!",
                 board: "Tablero",
-                yourHand: "Tu Mano"
+                yourHand: "Tu Mano",
+                drawTile: "Sacar una ficha",
+                passTurn: "Pasar turno",
+                send: "Enviar"
             }
             // Add more languages as needed
         };
@@ -191,6 +354,11 @@
         function updateLanguage(lang) {
             currentLanguage = lang;
             document.documentElement.lang = lang;
+            createGameButton.textContent = translate('gameCreated');
+            joinGameButton.textContent = translate('joinedGame');
+            drawTileButton.textContent = translate('drawTile');
+            passTurnButton.textContent = translate('passTurn');
+            sendMessageButton.textContent = translate('send');
         }
     </script>
 </body>
