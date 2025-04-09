@@ -1,513 +1,283 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Professional Domino Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>القرآن الكريم - Quran Kareem</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        :root {
+            --primary-color: #2c5f2d;
+            --secondary-color: #2e6047;
+            --gold-color: #d4af37;
+            --text-color: #2d3436;
+            --bg-color: #f9f9f9;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Arial', sans-serif;
+            font-family: 'Amiri Quran', 'Traditional Arabic', serif;
+            touch-action: manipulation;
         }
 
         body {
-            background: #1a2b3c;
-            color: #fff;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             overflow-x: hidden;
         }
 
-        #app {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .header {
-            text-align: center;
-            padding: 20px;
-            background: #2c3e50;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
-        .game-container {
-            display: grid;
-            grid-template-columns: 3fr 1fr;
-            gap: 20px;
-        }
-
-        .board {
-            background: #34495e;
-            border-radius: 10px;
-            padding: 20px;
-            min-height: 400px;
-            position: relative;
-            overflow: auto;
-        }
-
-        .domino-track {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            align-items: center;
-            min-height: 300px;
-            position: relative;
-        }
-
-        .domino {
-            width: 80px;
-            height: 160px;
-            background: #fff;
-            border-radius: 8px;
-            margin: 10px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            transition: transform 0.3s;
-            cursor: pointer;
-            position: absolute;
-        }
-
-        .domino.horizontal {
-            width: 160px;
-            height: 80px;
-            flex-direction: row;
-        }
-
-        .domino.double {
-            background: #fff8e1;
-        }
-
-        .domino .pips {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-        }
-
-        .pip {
-            width: 12px;
-            height: 12px;
-            background: #2c3e50;
-            border-radius: 50%;
-            margin: 2px;
-        }
-
-        .divider {
+        /* Navigation */
+        .nav-container {
+            position: fixed;
+            bottom: 0;
             width: 100%;
-            height: 2px;
-            background: #bdc3c7;
-            margin: 5px 0;
-        }
-
-        .domino.horizontal .divider {
-            width: 2px;
-            height: 100%;
-            margin: 0 5px;
-        }
-
-        .player-hand {
-            background: #2c3e50;
-            border-radius: 10px;
-            padding: 20px;
-        }
-
-        .controls {
+            background: white;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
             display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 20px;
+            justify-content: space-around;
+            padding: 10px 0;
         }
 
-        button {
+        .nav-item {
+            text-align: center;
             padding: 12px;
-            border: none;
-            border-radius: 5px;
-            background: #3498db;
+            color: var(--primary-color);
+            transition: transform 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: var(--gold-color);
+            transform: translateY(-5px);
+        }
+
+        /* Main Content */
+        .container {
+            padding: 20px;
+            padding-bottom: 80px;
+        }
+
+        .surah-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .surah-card:active {
+            transform: scale(0.98);
+        }
+
+        .surah-number {
+            width: 35px;
+            height: 35px;
+            background: var(--primary-color);
             color: white;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        button:disabled {
-            background: #7f8c8d;
-            cursor: not-allowed;
-        }
-
-        .end-marker {
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            background: #e74c3c;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            animation: pulse 1.5s infinite;
+            font-size: 1.1em;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-
-        .boneyard {
-            background: #2c3e50;
-            border-radius: 10px;
+        /* Quran Text */
+        .ayah-container {
+            font-size: 1.8em;
+            line-height: 2.5em;
+            text-align: justify;
             padding: 20px;
-            margin-top: 20px;
+            background: white;
+            border-radius: 15px;
+            margin-bottom: 15px;
         }
 
-        .scoreboard {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
+        .translation {
+            font-family: 'Arial', sans-serif;
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 10px;
         }
 
-        .player-info {
-            background: #34495e;
-            padding: 10px;
-            border-radius: 5px;
-            text-align: center;
+        /* Player Controls */
+        .player-bar {
+            position: fixed;
+            bottom: 60px;
+            width: 100%;
+            background: white;
+            padding: 15px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Settings Menu */
+        .settings-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 80%;
+            height: 100%;
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            transition: right 0.3s ease;
+        }
+
+        .settings-menu.active {
+            right: 0;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* Mobile Optimization */
+        @media (max-width: 600px) {
+            .ayah-container {
+                font-size: 1.5em;
+                line-height: 2em;
+            }
+            
+            .surah-card {
+                padding: 15px;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="app">
-        <div class="header">
-            <h1>Professional Domino Game</h1>
-            <p>Playing: Block Dominoes</p>
+    <!-- Header -->
+    <header style="background: var(--primary-color); color: white; padding: 15px; text-align: center;">
+        <h1>القرآن الكريم</h1>
+        <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+            <i class="fas fa-bookmark"></i>
+            <i class="fas fa-search"></i>
+            <i class="fas fa-cog"></i>
         </div>
+    </header>
 
-        <div class="scoreboard" id="scoreboard"></div>
-
-        <div class="game-container">
-            <div class="board">
-                <div class="domino-track" id="dominoTrack"></div>
-            </div>
-
-            <div class="player-hand" id="playerArea">
-                <h2>Your Hand</h2>
-                <div id="handContainer"></div>
-                <div class="controls">
-                    <button id="drawButton">Draw from Boneyard</button>
-                    <button id="passButton" disabled>Pass Turn</button>
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Surah List -->
+        <div class="surah-card fade-in">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="surah-number">1</div>
+                <div>
+                    <h2 style="color: var(--primary-color);">الفاتحة</h2>
+                    <p style="color: #666;">Al-Fatiha</p>
                 </div>
             </div>
         </div>
 
-        <div class="boneyard">
-            <h3>Boneyard: <span id="boneyardCount">0</span> remaining</h3>
+        <!-- Quran Text -->
+        <div class="ayah-container">
+            <p>بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
+            <p class="translation">In the name of Allah, the Entirely Merciful, the Especially Merciful.</p>
+        </div>
+    </div>
+
+    <!-- Player Controls -->
+    <div class="player-bar">
+        <i class="fas fa-step-backward"></i>
+        <i class="fas fa-play-circle" style="font-size: 2em;"></i>
+        <i class="fas fa-step-forward"></i>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="nav-container">
+        <div class="nav-item active">
+            <i class="fas fa-quran"></i>
+            <div>Surah</div>
+        </div>
+        <div class="nav-item">
+            <i class="fas fa-play"></i>
+            <div>Recitation</div>
+        </div>
+        <div class="nav-item">
+            <i class="fas fa-book-open"></i>
+            <div>Bookmarks</div>
+        </div>
+    </nav>
+
+    <!-- Settings Menu -->
+    <div class="settings-menu">
+        <h2>الإعدادات</h2>
+        <div style="margin-top: 20px;">
+            <div style="display: flex; justify-content: space-between; margin: 15px 0;">
+                <span>حجم الخط</span>
+                <div>
+                    <button>A-</button>
+                    <button>A+</button>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin: 15px 0;">
+                <span>الوضع الليلي</span>
+                <i class="fas fa-moon"></i>
+            </div>
         </div>
     </div>
 
     <script>
-        class DominoGame {
-            constructor() {
-                this.players = [];
-                this.currentPlayer = 0;
-                this.board = [];
-                this.boneyard = [];
-                this.openEnds = [];
-                this.gameMode = 'block';
-                this.dominoSet = this.generateDominoSet();
-                
-                this.initGame();
-                this.initEventListeners();
-            }
+        // Sample Quran data (should be replaced with complete data)
+        const quranData = {
+            surahs: [
+                {
+                    number: 1,
+                    name: "الفاتحة",
+                    transliteration: "Al-Fatiha",
+                    ayahs: [
+                        {
+                            text: "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ",
+                            translation: "In the name of Allah, the Entirely Merciful, the Especially Merciful."
+                        },
+                        // Add more ayahs
+                    ]
+                },
+                // Add more surahs
+            ]
+        };
 
-            initGame() {
-                this.shuffleDominoes();
-                this.setupPlayers(2);
-                this.dealDominoes();
-                this.determineFirstPlayer();
-                this.updateUI();
-            }
+        // Toggle settings menu
+        document.querySelector('.fa-cog').addEventListener('click', () => {
+            document.querySelector('.settings-menu').classList.toggle('active');
+        });
 
-            generateDominoSet() {
-                const dominoes = [];
-                for (let i = 0; i <= 6; i++) {
-                    for (let j = i; j <= 6; j++) {
-                        dominoes.push([i, j]);
-                    }
-                }
-                return dominoes;
-            }
+        // Font size adjustment
+        let fontSize = 1.8;
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if(e.target.textContent === 'A+') fontSize += 0.1;
+                else fontSize -= 0.1;
+                document.querySelector('.ayah-container').style.fontSize = `${fontSize}em`;
+            });
+        });
 
-            shuffleDominoes() {
-                for (let i = this.dominoSet.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [this.dominoSet[i], this.dominoSet[j]] = [this.dominoSet[j], this.dominoSet[i]];
-                }
-            }
+        // Add swipe gestures for mobile navigation
+        let touchStartX = 0;
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.touches[0].clientX;
+        });
 
-            setupPlayers(count) {
-                for (let i = 0; i < count; i++) {
-                    this.players.push({
-                        id: i,
-                        name: i === 0 ? 'Player' : `Computer ${i}`,
-                        hand: [],
-                        score: 0,
-                        isHuman: i === 0
-                    });
-                }
-            }
-
-            dealDominoes() {
-                const dominoesPerPlayer = this.players.length === 2 ? 7 : 5;
-                this.players.forEach(player => {
-                    player.hand = this.dominoSet.splice(0, dominoesPerPlayer);
-                });
-                this.boneyard = [...this.dominoSet];
-            }
-
-            determineFirstPlayer() {
-                let maxDouble = -1;
-                this.players.forEach((player, index) => {
-                    player.hand.forEach(domino => {
-                        if (domino[0] === domino[1] && domino[0] > maxDouble) {
-                            maxDouble = domino[0];
-                            this.currentPlayer = index;
-                        }
-                    });
-                });
-            }
-
-            initEventListeners() {
-                document.getElementById('drawButton').addEventListener('click', () => this.drawDomino());
-                document.getElementById('passButton').addEventListener('click', () => this.passTurn());
-            }
-
-            updateUI() {
-                this.updateScoreboard();
-                this.updateHand();
-                this.updateBoard();
-                this.updateBoneyard();
-                this.updateControls();
-            }
-
-            updateScoreboard() {
-                const container = document.getElementById('scoreboard');
-                container.innerHTML = this.players.map(player => `
-                    <div class="player-info">
-                        <h3>${player.name}</h3>
-                        <p>Score: ${player.score}</p>
-                        <p>Dominos: ${player.hand.length}</p>
-                    </div>
-                `).join('');
-            }
-
-            updateHand() {
-                const container = document.getElementById('handContainer');
-                container.innerHTML = this.humanPlayer.hand
-                    .map((domino, index) => this.createDominoElement(domino, index))
-                    .join('');
-            }
-
-            createDominoElement(domino, index) {
-                const isDouble = domino[0] === domino[1];
-                return `
-                    <div class="domino ${isDouble ? 'double' : ''}" data-index="${index}">
-                        <div class="pips">${this.createPips(domino[0])}</div>
-                        <div class="divider"></div>
-                        <div class="pips">${this.createPips(domino[1])}</div>
-                    </div>
-                `;
-            }
-
-            createPips(value) {
-                if (value === 0) return '';
-                const positions = {
-                    1: ['center'],
-                    2: ['top-left', 'bottom-right'],
-                    3: ['top-left', 'center', 'bottom-right'],
-                    4: ['top-left', 'top-right', 'bottom-left', 'bottom-right'],
-                    5: ['top-left', 'top-right', 'center', 'bottom-left', 'bottom-right'],
-                    6: ['top-left', 'top-right', 'middle-left', 'middle-right', 'bottom-left', 'bottom-right']
-                };
-                return positions[value].map(pos => `<div class="pip ${pos}"></div>`).join('');
-            }
-
-            updateBoard() {
-                const container = document.getElementById('dominoTrack');
-                container.innerHTML = '';
-                this.board.forEach(domino => {
-                    const element = document.createElement('div');
-                    element.className = `domino ${domino.orientation} ${domino.isDouble ? 'double' : ''}`;
-                    element.style.left = `${domino.x}px`;
-                    element.style.top = `${domino.y}px`;
-                    element.innerHTML = `
-                        <div class="pips">${this.createPips(domino.values[0])}</div>
-                        <div class="divider"></div>
-                        <div class="pips">${this.createPips(domino.values[1])}</div>
-                    `;
-                    container.appendChild(element);
-                });
-
-                // Add end markers
-                this.openEnds.forEach((end, index) => {
-                    const marker = document.createElement('div');
-                    marker.className = 'end-marker';
-                    marker.style.left = `${end.x}px`;
-                    marker.style.top = `${end.y}px`;
-                    marker.textContent = end.value;
-                    marker.addEventListener('click', () => this.handleEndClick(index));
-                    container.appendChild(marker);
-                });
-            }
-
-            handleEndClick(endIndex) {
-                const selectedDomino = document.querySelector('.domino.selected');
-                if (selectedDomino) {
-                    const dominoIndex = parseInt(selectedDomino.dataset.index);
-                    this.playDomino(dominoIndex, endIndex);
-                }
-            }
-
-            playDomino(handIndex, endIndex) {
-                const domino = this.humanPlayer.hand[handIndex];
-                const end = this.openEnds[endIndex];
-                
-                if (!this.isValidPlay(domino, end.value)) return;
-
-                const rotated = domino[0] === end.value ? domino : [domino[1], domino[0]];
-                this.placeDomino(rotated, endIndex);
-                this.humanPlayer.hand.splice(handIndex, 1);
-                
-                if (this.humanPlayer.hand.length === 0) {
-                    this.endGame();
-                    return;
-                }
-
-                this.nextTurn();
-            }
-
-            isValidPlay(domino, endValue) {
-                return domino[0] === endValue || domino[1] === endValue;
-            }
-
-            placeDomino(domino, endIndex) {
-                const isDouble = domino[0] === domino[1];
-                const end = this.openEnds[endIndex];
-                const position = this.calculatePosition(end, isDouble);
-                
-                this.board.push({
-                    values: domino,
-                    orientation: isDouble ? 'vertical' : 'horizontal',
-                    x: position.x,
-                    y: position.y,
-                    isDouble
-                });
-
-                this.updateOpenEnds(domino, position, isDouble);
-            }
-
-            calculatePosition(end, isDouble) {
-                // Complex position calculation based on board state
-                // Simplified example:
-                return {
-                    x: end.x + (isDouble ? 0 : 80),
-                    y: end.y + (isDouble ? 80 : 0)
-                };
-            }
-
-            updateOpenEnds(domino, position, isDouble) {
-                this.openEnds.splice(endIndex, 1);
-                if (isDouble) {
-                    this.openEnds.push(
-                        { value: domino[0], x: position.x, y: position.y - 40 },
-                        { value: domino[1], x: position.x, y: position.y + 40 }
-                    );
+        document.addEventListener('touchend', e => {
+            const deltaX = e.changedTouches[0].clientX - touchStartX;
+            if(Math.abs(deltaX) > 50) {
+                if(deltaX > 0) {
+                    // Previous ayah
                 } else {
-                    this.openEnds.push({
-                        value: domino[1],
-                        x: position.x + 80,
-                        y: position.y
-                    });
+                    // Next ayah
                 }
             }
-
-            drawDomino() {
-                if (this.boneyard.length === 0) return;
-                this.humanPlayer.hand.push(this.boneyard.pop());
-                this.updateUI();
-            }
-
-            passTurn() {
-                this.nextTurn();
-            }
-
-            nextTurn() {
-                this.currentPlayer = (this.currentPlayer + 1) % this.players.length;
-                if (!this.currentPlayer.isHuman) {
-                    setTimeout(() => this.computerTurn(), 1000);
-                }
-                this.updateUI();
-            }
-
-            computerTurn() {
-                // Advanced AI logic
-                const validMoves = this.findValidMoves();
-                if (validMoves.length > 0) {
-                    const move = this.selectBestMove(validMoves);
-                    this.playComputerMove(move);
-                } else if (this.boneyard.length > 0) {
-                    this.computerDraw();
-                } else {
-                    this.passTurn();
-                }
-            }
-
-            findValidMoves() {
-                return this.openEnds.flatMap((end, endIndex) => 
-                    this.currentPlayer.hand
-                        .filter(domino => this.isValidPlay(domino, end.value))
-                        .map(domino => ({ domino, endIndex }))
-                );
-            }
-
-            selectBestMove(moves) {
-                // Prioritize playing doubles and high-value dominoes
-                return moves.reduce((best, current) => {
-                    const currentScore = current.domino[0] + current.domino[1];
-                    const bestScore = best.domino[0] + best.domino[1];
-                    return currentScore > bestScore ? current : best;
-                });
-            }
-
-            endGame() {
-                // Calculate scores and handle game end
-                alert('Game Over!');
-            }
-
-            get humanPlayer() {
-                return this.players.find(p => p.isHuman);
-            }
-
-            updateControls() {
-                document.getElementById('passButton').disabled = !this.canPass();
-                document.getElementById('drawButton').disabled = this.boneyard.length === 0;
-            }
-
-            canPass() {
-                return this.boneyard.length === 0 && 
-                       !this.humanPlayer.hand.some(d => 
-                           this.openEnds.some(e => this.isValidPlay(d, e.value)));
-            }
-
-            updateBoneyard() {
-                document.getElementById('boneyardCount').textContent = this.boneyard.length;
-            }
-        }
-
-        // Start the game when loaded
-        window.addEventListener('load', () => new DominoGame());
+        });
     </script>
 </body>
 </html>
