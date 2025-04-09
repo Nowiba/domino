@@ -3,938 +3,511 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Authentic Domino Game</title>
+    <title>Professional Domino Game</title>
     <style>
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
             font-family: 'Arial', sans-serif;
-            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            background-color: #2c3e50;
-            color: #ecf0f1;
+            background: #1a2b3c;
+            color: #fff;
             overflow-x: hidden;
-            touch-action: manipulation;
         }
 
         #app {
-            max-width: 100%;
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 10px;
-            position: relative;
-            min-height: 100vh;
+            padding: 20px;
         }
 
         .header {
             text-align: center;
-            padding: 15px 0;
-            background-color: #3498db;
-            color: white;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            padding: 20px;
+            background: #2c3e50;
+            border-radius: 10px;
+            margin-bottom: 20px;
         }
 
         .game-container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 20px;
         }
 
         .board {
-            background-color: #34495e;
-            border-radius: 8px;
-            padding: 15px;
-            min-height: 200px;
+            background: #34495e;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 400px;
             position: relative;
             overflow: auto;
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.2);
-            margin-bottom: 15px;
-            border: 2px solid #2c3e50;
         }
 
-        .domino-chain {
+        .domino-track {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             align-items: center;
-            min-height: 150px;
-            padding: 20px;
+            min-height: 300px;
             position: relative;
         }
 
         .domino {
-            width: 60px;
-            height: 120px;
-            background-color: white;
+            width: 80px;
+            height: 160px;
+            background: #fff;
             border-radius: 8px;
             margin: 10px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            position: relative;
-            transition: all 0.3s ease;
+            padding: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            transition: transform 0.3s;
             cursor: pointer;
-            z-index: 2;
-            border: 2px solid #bdc3c7;
-        }
-
-        .domino.horizontal {
-            width: 120px;
-            height: 60px;
-            flex-direction: row;
-            padding: 0 8px;
-        }
-
-        .domino.vertical {
-            transform: rotate(90deg);
-            margin: 30px 15px;
-        }
-
-        .domino.double {
-            background-color: #fff3e0;
-            border-color: #ffab91;
-        }
-
-        .domino.selected {
-            transform: translateY(-20px) scale(1.1);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
-            z-index: 10;
-            border-color: #e74c3c;
-        }
-
-        .domino .half {
-            width: 100%;
-            height: 50%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-            align-items: center;
-            position: relative;
-        }
-
-        .domino.horizontal .half {
-            width: 50%;
-            height: 100%;
-            flex-direction: row;
-        }
-
-        .domino .pip {
-            width: 10px;
-            height: 10px;
-            background-color: #2c3e50;
-            border-radius: 50%;
-            flex-shrink: 0;
-            box-shadow: inset 0 0 3px rgba(0,0,0,0.3);
-        }
-
-        .domino .divider {
-            width: 90%;
-            height: 3px;
-            background-color: #bdc3c7;
-            border-radius: 3px;
-        }
-
-        .domino.horizontal .divider {
-            width: 3px;
-            height: 90%;
-        }
-
-        .domino-connector {
-            width: 20px;
-            height: 4px;
-            background: #7f8c8d;
-            margin: 0 -2px;
-            z-index: 1;
             position: absolute;
         }
 
-        .player-area {
-            background-color: #3498db;
-            border-radius: 8px;
-            padding: 15px;
-            color: white;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            margin-bottom: 15px;
-            border: 2px solid #2980b9;
+        .domino.horizontal {
+            width: 160px;
+            height: 80px;
+            flex-direction: row;
+        }
+
+        .domino.double {
+            background: #fff8e1;
+        }
+
+        .domino .pips {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        .pip {
+            width: 12px;
+            height: 12px;
+            background: #2c3e50;
+            border-radius: 50%;
+            margin: 2px;
+        }
+
+        .divider {
+            width: 100%;
+            height: 2px;
+            background: #bdc3c7;
+            margin: 5px 0;
+        }
+
+        .domino.horizontal .divider {
+            width: 2px;
+            height: 100%;
+            margin: 0 5px;
         }
 
         .player-hand {
-            display: flex;
-            gap: 10px;
-            padding: 15px 0;
-            overflow-x: auto;
-            min-height: 140px;
-            align-items: center;
-            scrollbar-width: thin;
-            scrollbar-color: rgba(255,255,255,0.5) transparent;
-        }
-
-        .player-hand::-webkit-scrollbar {
-            height: 8px;
-        }
-
-        .player-hand::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.5);
-            border-radius: 4px;
+            background: #2c3e50;
+            border-radius: 10px;
+            padding: 20px;
         }
 
         .controls {
             display: flex;
+            flex-direction: column;
             gap: 10px;
-            margin-top: 15px;
-            flex-wrap: wrap;
-            justify-content: center;
+            margin-top: 20px;
         }
 
         button {
-            background-color: #e74c3c;
-            color: white;
+            padding: 12px;
             border: none;
-            padding: 12px 20px;
-            border-radius: 6px;
-            font-weight: bold;
+            border-radius: 5px;
+            background: #3498db;
+            color: white;
             cursor: pointer;
-            flex-grow: 1;
-            transition: all 0.2s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            min-width: 120px;
-            font-size: 16px;
+            transition: background 0.3s;
         }
 
         button:disabled {
-            background-color: #95a5a6;
+            background: #7f8c8d;
             cursor: not-allowed;
-            opacity: 0.7;
-        }
-
-        button:hover:not(:disabled) {
-            background-color: #c0392b;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-        }
-
-        .game-status {
-            text-align: center;
-            margin: 15px 0;
-            font-weight: bold;
-            font-size: 1.2em;
-            background-color: rgba(0,0,0,0.2);
-            padding: 10px;
-            border-radius: 6px;
-        }
-
-        .scoreboard {
-            display: flex;
-            justify-content: space-around;
-            background-color: #34495e;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-
-        .player-score {
-            text-align: center;
-            padding: 5px 10px;
-            border-radius: 4px;
-            background-color: rgba(255,255,255,0.1);
-        }
-
-        .player-score.active {
-            background-color: #e74c3c;
-            font-weight: bold;
         }
 
         .end-marker {
             position: absolute;
-            width: 20px;
-            height: 20px;
-            background-color: #e74c3c;
+            width: 30px;
+            height: 30px;
+            background: #e74c3c;
             border-radius: 50%;
-            z-index: 5;
             display: flex;
-            justify-content: center;
             align-items: center;
-            color: white;
-            font-weight: bold;
+            justify-content: center;
             cursor: pointer;
+            animation: pulse 1.5s infinite;
         }
 
-        @media (max-width: 600px) {
-            .domino {
-                width: 50px;
-                height: 100px;
-            }
-            
-            .domino.horizontal {
-                width: 100px;
-                height: 50px;
-            }
-            
-            button {
-                padding: 10px 15px;
-                font-size: 14px;
-            }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .boneyard {
+            background: #2c3e50;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .scoreboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .player-info {
+            background: #34495e;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <div id="app">
         <div class="header">
-            <h1>Authentic Domino Game</h1>
+            <h1>Professional Domino Game</h1>
+            <p>Playing: Block Dominoes</p>
         </div>
 
-        <div id="gameScreen" style="display: block;">
-            <div class="scoreboard" id="scoreboard"></div>
-            <div class="game-status" id="gameStatus">Your turn!</div>
-            
-            <div class="game-container">
-                <div class="board">
-                    <div class="domino-chain" id="dominoChain"></div>
-                </div>
+        <div class="scoreboard" id="scoreboard"></div>
 
-                <div class="player-area">
-                    <h3>Your Hand</h3>
-                    <div class="player-hand" id="playerHand"></div>
-                    <div class="controls">
-                        <button id="drawBtn">Draw from Boneyard</button>
-                        <button id="passBtn" disabled>Pass Turn</button>
-                    </div>
+        <div class="game-container">
+            <div class="board">
+                <div class="domino-track" id="dominoTrack"></div>
+            </div>
+
+            <div class="player-hand" id="playerArea">
+                <h2>Your Hand</h2>
+                <div id="handContainer"></div>
+                <div class="controls">
+                    <button id="drawButton">Draw from Boneyard</button>
+                    <button id="passButton" disabled>Pass Turn</button>
                 </div>
             </div>
+        </div>
+
+        <div class="boneyard">
+            <h3>Boneyard: <span id="boneyardCount">0</span> remaining</h3>
         </div>
     </div>
 
     <script>
-        // DOM elements
-        const gameScreen = document.getElementById('gameScreen');
-        const playerHand = document.getElementById('playerHand');
-        const dominoChain = document.getElementById('dominoChain');
-        const gameStatus = document.getElementById('gameStatus');
-        const drawBtn = document.getElementById('drawBtn');
-        const passBtn = document.getElementById('passBtn');
-        const scoreboard = document.getElementById('scoreboard');
-
-        // Game state
-        let gameState = {
-            players: [
-                { id: 0, name: 'You', dominoes: [], score: 0, isHuman: true },
-                { id: 1, name: 'Computer', dominoes: [], score: 0, isHuman: false }
-            ],
-            currentPlayer: 0,
-            board: [],
-            stock: [],
-            openEnds: [],
-            gameOver: false,
-            winner: null
-        };
-
-        let playerDominoes = [];
-        let isCurrentPlayer = false;
-        let selectedDomino = null;
-        let selectedEnd = null;
-
-        // Initialize the game
-        function init() {
-            // Generate domino set
-            const dominoSet = generateDominoSet();
-            shuffleArray(dominoSet);
-
-            // Deal dominoes (7 each for 2 players)
-            gameState.players[0].dominoes = dominoSet.slice(0, 7);
-            gameState.players[1].dominoes = dominoSet.slice(7, 14);
-            gameState.stock = dominoSet.slice(14);
-
-            // Determine who starts (player with highest double)
-            let startingPlayer = 0;
-            let highestDouble = -1;
-            
-            gameState.players.forEach((player, index) => {
-                player.dominoes.forEach(domino => {
-                    if (domino[0] === domino[1] && domino[0] > highestDouble) {
-                        highestDouble = domino[0];
-                        startingPlayer = index;
-                    }
-                });
-            });
-            
-            // If no doubles, player with highest sum domino starts
-            if (highestDouble === -1) {
-                let highestSum = -1;
+        class DominoGame {
+            constructor() {
+                this.players = [];
+                this.currentPlayer = 0;
+                this.board = [];
+                this.boneyard = [];
+                this.openEnds = [];
+                this.gameMode = 'block';
+                this.dominoSet = this.generateDominoSet();
                 
-                gameState.players.forEach((player, index) => {
-                    player.dominoes.forEach(domino => {
-                        const sum = domino[0] + domino[1];
-                        if (sum > highestSum) {
-                            highestSum = sum;
-                            startingPlayer = index;
+                this.initGame();
+                this.initEventListeners();
+            }
+
+            initGame() {
+                this.shuffleDominoes();
+                this.setupPlayers(2);
+                this.dealDominoes();
+                this.determineFirstPlayer();
+                this.updateUI();
+            }
+
+            generateDominoSet() {
+                const dominoes = [];
+                for (let i = 0; i <= 6; i++) {
+                    for (let j = i; j <= 6; j++) {
+                        dominoes.push([i, j]);
+                    }
+                }
+                return dominoes;
+            }
+
+            shuffleDominoes() {
+                for (let i = this.dominoSet.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [this.dominoSet[i], this.dominoSet[j]] = [this.dominoSet[j], this.dominoSet[i]];
+                }
+            }
+
+            setupPlayers(count) {
+                for (let i = 0; i < count; i++) {
+                    this.players.push({
+                        id: i,
+                        name: i === 0 ? 'Player' : `Computer ${i}`,
+                        hand: [],
+                        score: 0,
+                        isHuman: i === 0
+                    });
+                }
+            }
+
+            dealDominoes() {
+                const dominoesPerPlayer = this.players.length === 2 ? 7 : 5;
+                this.players.forEach(player => {
+                    player.hand = this.dominoSet.splice(0, dominoesPerPlayer);
+                });
+                this.boneyard = [...this.dominoSet];
+            }
+
+            determineFirstPlayer() {
+                let maxDouble = -1;
+                this.players.forEach((player, index) => {
+                    player.hand.forEach(domino => {
+                        if (domino[0] === domino[1] && domino[0] > maxDouble) {
+                            maxDouble = domino[0];
+                            this.currentPlayer = index;
                         }
                     });
                 });
             }
 
-            gameState.currentPlayer = startingPlayer;
-            isCurrentPlayer = gameState.players[startingPlayer].isHuman;
-
-            // Update UI
-            updateGameUI();
-
-            // If computer starts, make a move
-            if (!isCurrentPlayer) {
-                setTimeout(computerMove, 1000);
+            initEventListeners() {
+                document.getElementById('drawButton').addEventListener('click', () => this.drawDomino());
+                document.getElementById('passButton').addEventListener('click', () => this.passTurn());
             }
 
-            // Set up event listeners
-            drawBtn.addEventListener('click', drawDomino);
-            passBtn.addEventListener('click', passTurn);
-        }
-
-        // Update game UI
-        function updateGameUI() {
-            // Update scoreboard
-            updateScoreboard();
-            
-            // Update game status
-            const currentPlayer = gameState.players[gameState.currentPlayer];
-            if (currentPlayer.isHuman) {
-                gameStatus.textContent = 'Your turn!';
-                gameStatus.style.color = '#2ecc71';
-            } else {
-                gameStatus.textContent = `${currentPlayer.name}'s turn`;
-                gameStatus.style.color = '#ecf0f1';
+            updateUI() {
+                this.updateScoreboard();
+                this.updateHand();
+                this.updateBoard();
+                this.updateBoneyard();
+                this.updateControls();
             }
-            
-            // Update board
-            renderBoard();
-            
-            // Update player's hand
-            playerDominoes = gameState.players[0].dominoes;
-            updatePlayerHand();
-            
-            // Update buttons
-            drawBtn.disabled = !isCurrentPlayer || gameState.stock.length === 0;
-            passBtn.disabled = !isCurrentPlayer || !canPass();
-        }
 
-        // Update scoreboard
-        function updateScoreboard() {
-            scoreboard.innerHTML = '';
-            
-            gameState.players.forEach((player, index) => {
-                const playerScore = document.createElement('div');
-                playerScore.className = `player-score ${index === gameState.currentPlayer ? 'active' : ''}`;
-                playerScore.innerHTML = `
-                    <div>${player.name}</div>
-                    <div>${player.score} pts</div>
+            updateScoreboard() {
+                const container = document.getElementById('scoreboard');
+                container.innerHTML = this.players.map(player => `
+                    <div class="player-info">
+                        <h3>${player.name}</h3>
+                        <p>Score: ${player.score}</p>
+                        <p>Dominos: ${player.hand.length}</p>
+                    </div>
+                `).join('');
+            }
+
+            updateHand() {
+                const container = document.getElementById('handContainer');
+                container.innerHTML = this.humanPlayer.hand
+                    .map((domino, index) => this.createDominoElement(domino, index))
+                    .join('');
+            }
+
+            createDominoElement(domino, index) {
+                const isDouble = domino[0] === domino[1];
+                return `
+                    <div class="domino ${isDouble ? 'double' : ''}" data-index="${index}">
+                        <div class="pips">${this.createPips(domino[0])}</div>
+                        <div class="divider"></div>
+                        <div class="pips">${this.createPips(domino[1])}</div>
+                    </div>
                 `;
-                scoreboard.appendChild(playerScore);
-            });
-        }
+            }
 
-        // Render the game board
-        function renderBoard() {
-            dominoChain.innerHTML = '';
-            
-            // Create a central starting point
-            const centerX = dominoChain.offsetWidth / 2;
-            const centerY = dominoChain.offsetHeight / 2;
-            
-            // Render all dominoes on the board
-            gameState.board.forEach(domino => {
-                const dominoEl = createDominoElement(domino.value, domino.orientation);
-                dominoEl.style.position = 'absolute';
-                dominoEl.style.left = `${domino.x}px`;
-                dominoEl.style.top = `${domino.y}px`;
-                dominoEl.style.transform = domino.orientation === 'vertical' ? 'rotate(90deg)' : '';
-                dominoChain.appendChild(dominoEl);
-            });
-            
-            // Render open ends
-            gameState.openEnds.forEach((end, index) => {
-                const endMarker = document.createElement('div');
-                endMarker.className = 'end-marker';
-                endMarker.textContent = end.value;
-                endMarker.style.left = `${end.x}px`;
-                endMarker.style.top = `${end.y}px`;
-                endMarker.dataset.endIndex = index;
+            createPips(value) {
+                if (value === 0) return '';
+                const positions = {
+                    1: ['center'],
+                    2: ['top-left', 'bottom-right'],
+                    3: ['top-left', 'center', 'bottom-right'],
+                    4: ['top-left', 'top-right', 'bottom-left', 'bottom-right'],
+                    5: ['top-left', 'top-right', 'center', 'bottom-left', 'bottom-right'],
+                    6: ['top-left', 'top-right', 'middle-left', 'middle-right', 'bottom-left', 'bottom-right']
+                };
+                return positions[value].map(pos => `<div class="pip ${pos}"></div>`).join('');
+            }
+
+            updateBoard() {
+                const container = document.getElementById('dominoTrack');
+                container.innerHTML = '';
+                this.board.forEach(domino => {
+                    const element = document.createElement('div');
+                    element.className = `domino ${domino.orientation} ${domino.isDouble ? 'double' : ''}`;
+                    element.style.left = `${domino.x}px`;
+                    element.style.top = `${domino.y}px`;
+                    element.innerHTML = `
+                        <div class="pips">${this.createPips(domino.values[0])}</div>
+                        <div class="divider"></div>
+                        <div class="pips">${this.createPips(domino.values[1])}</div>
+                    `;
+                    container.appendChild(element);
+                });
+
+                // Add end markers
+                this.openEnds.forEach((end, index) => {
+                    const marker = document.createElement('div');
+                    marker.className = 'end-marker';
+                    marker.style.left = `${end.x}px`;
+                    marker.style.top = `${end.y}px`;
+                    marker.textContent = end.value;
+                    marker.addEventListener('click', () => this.handleEndClick(index));
+                    container.appendChild(marker);
+                });
+            }
+
+            handleEndClick(endIndex) {
+                const selectedDomino = document.querySelector('.domino.selected');
+                if (selectedDomino) {
+                    const dominoIndex = parseInt(selectedDomino.dataset.index);
+                    this.playDomino(dominoIndex, endIndex);
+                }
+            }
+
+            playDomino(handIndex, endIndex) {
+                const domino = this.humanPlayer.hand[handIndex];
+                const end = this.openEnds[endIndex];
                 
-                if (isCurrentPlayer) {
-                    endMarker.style.cursor = 'pointer';
-                    endMarker.addEventListener('click', () => {
-                        if (selectedDomino !== null) {
-                            placeDomino(selectedDomino, index);
-                        }
+                if (!this.isValidPlay(domino, end.value)) return;
+
+                const rotated = domino[0] === end.value ? domino : [domino[1], domino[0]];
+                this.placeDomino(rotated, endIndex);
+                this.humanPlayer.hand.splice(handIndex, 1);
+                
+                if (this.humanPlayer.hand.length === 0) {
+                    this.endGame();
+                    return;
+                }
+
+                this.nextTurn();
+            }
+
+            isValidPlay(domino, endValue) {
+                return domino[0] === endValue || domino[1] === endValue;
+            }
+
+            placeDomino(domino, endIndex) {
+                const isDouble = domino[0] === domino[1];
+                const end = this.openEnds[endIndex];
+                const position = this.calculatePosition(end, isDouble);
+                
+                this.board.push({
+                    values: domino,
+                    orientation: isDouble ? 'vertical' : 'horizontal',
+                    x: position.x,
+                    y: position.y,
+                    isDouble
+                });
+
+                this.updateOpenEnds(domino, position, isDouble);
+            }
+
+            calculatePosition(end, isDouble) {
+                // Complex position calculation based on board state
+                // Simplified example:
+                return {
+                    x: end.x + (isDouble ? 0 : 80),
+                    y: end.y + (isDouble ? 80 : 0)
+                };
+            }
+
+            updateOpenEnds(domino, position, isDouble) {
+                this.openEnds.splice(endIndex, 1);
+                if (isDouble) {
+                    this.openEnds.push(
+                        { value: domino[0], x: position.x, y: position.y - 40 },
+                        { value: domino[1], x: position.x, y: position.y + 40 }
+                    );
+                } else {
+                    this.openEnds.push({
+                        value: domino[1],
+                        x: position.x + 80,
+                        y: position.y
                     });
                 }
-                
-                dominoChain.appendChild(endMarker);
-            });
-        }
+            }
 
-        // Update player's hand
-        function updatePlayerHand() {
-            playerHand.innerHTML = '';
-            
-            playerDominoes.forEach((domino, index) => {
-                const dominoEl = createDominoElement(domino);
-                dominoEl.dataset.index = index;
-                
-                if (isCurrentPlayer) {
-                    dominoEl.style.cursor = 'pointer';
-                    dominoEl.addEventListener('click', () => {
-                        // Deselect previous selection
-                        if (selectedDomino !== null) {
-                            playerHand.children[selectedDomino].classList.remove('selected');
-                        }
-                        
-                        // Select this domino
-                        selectedDomino = index;
-                        dominoEl.classList.add('selected');
-                    });
+            drawDomino() {
+                if (this.boneyard.length === 0) return;
+                this.humanPlayer.hand.push(this.boneyard.pop());
+                this.updateUI();
+            }
+
+            passTurn() {
+                this.nextTurn();
+            }
+
+            nextTurn() {
+                this.currentPlayer = (this.currentPlayer + 1) % this.players.length;
+                if (!this.currentPlayer.isHuman) {
+                    setTimeout(() => this.computerTurn(), 1000);
                 }
-                
-                playerHand.appendChild(dominoEl);
-            });
-        }
-
-        // Create a domino element
-        function createDominoElement(domino, orientation = 'horizontal') {
-            const dominoEl = document.createElement('div');
-            dominoEl.className = `domino ${orientation}`;
-            
-            if (domino[0] === domino[1]) {
-                dominoEl.classList.add('double');
+                this.updateUI();
             }
-            
-            // Create left half
-            const leftHalf = document.createElement('div');
-            leftHalf.className = 'half';
-            createPips(leftHalf, domino[0]);
-            
-            // Create divider
-            const divider = document.createElement('div');
-            divider.className = 'divider';
-            
-            // Create right half
-            const rightHalf = document.createElement('div');
-            rightHalf.className = 'half';
-            createPips(rightHalf, domino[1]);
-            
-            dominoEl.appendChild(leftHalf);
-            dominoEl.appendChild(divider);
-            dominoEl.appendChild(rightHalf);
-            
-            return dominoEl;
-        }
 
-        // Create pips for a domino half
-        function createPips(container, value) {
-            if (value === 0) return;
-            
-            // Create appropriate pip configuration based on value
-            switch(value) {
-                case 1:
-                    container.innerHTML = '<div class="pip"></div>';
-                    break;
-                case 2:
-                    container.innerHTML = `
-                        <div style="align-self: flex-start;" class="pip"></div>
-                        <div style="align-self: flex-end;" class="pip"></div>
-                    `;
-                    break;
-                case 3:
-                    container.innerHTML = `
-                        <div style="align-self: flex-start;" class="pip"></div>
-                        <div style="align-self: center;" class="pip"></div>
-                        <div style="align-self: flex-end;" class="pip"></div>
-                    `;
-                    break;
-                case 4:
-                    container.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; width: 100%;">
-                            <div class="pip"></div>
-                            <div class="pip"></div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; width: 100%;">
-                            <div class="pip"></div>
-                            <div class="pip"></div>
-                        </div>
-                    `;
-                    break;
-                case 5:
-                    container.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; width: 100%;">
-                            <div class="pip"></div>
-                            <div class="pip"></div>
-                        </div>
-                        <div style="display: flex; justify-content: center; width: 100%;">
-                            <div class="pip"></div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; width: 100%;">
-                            <div class="pip"></div>
-                            <div class="pip"></div>
-                        </div>
-                    `;
-                    break;
-                case 6:
-                    container.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; width: 100%;">
-                            <div class="pip"></div>
-                            <div class="pip"></div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; width: 100%;">
-                            <div class="pip"></div>
-                            <div class="pip"></div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; width: 100%;">
-                            <div class="pip"></div>
-                            <div class="pip"></div>
-                        </div>
-                    `;
-                    break;
-            }
-        }
-
-        // Place a domino on the board
-        function placeDomino(dominoIndex, endIndex) {
-            const domino = playerDominoes[dominoIndex];
-            const end = gameState.openEnds[endIndex];
-            
-            // Check if domino can connect to this end
-            if (domino[0] !== end.value && domino[1] !== end.value) return;
-            
-            // Rotate domino if needed
-            const rotatedDomino = domino[0] === end.value ? domino : [domino[1], domino[0]];
-            
-            // Calculate position based on end position
-            const centerX = dominoChain.offsetWidth / 2;
-            const centerY = dominoChain.offsetHeight / 2;
-            
-            let x, y, orientation;
-            
-            if (gameState.board.length === 0) {
-                // First domino goes in the center
-                x = centerX - 60;
-                y = centerY - 60;
-                orientation = 'horizontal';
-                
-                // Set up initial open ends
-                gameState.openEnds = [
-                    { value: rotatedDomino[0], x: x - 30, y: y + 60 },
-                    { value: rotatedDomino[1], x: x + 150, y: y + 60 }
-                ];
-            } else {
-                // Place relative to the end
-                if (end.x < centerX) {
-                    // Place to the left
-                    x = end.x - 120;
-                    y = end.y - 30;
-                    orientation = 'horizontal';
-                    gameState.openEnds.push({ value: rotatedDomino[0], x: x - 30, y: y + 30 });
-                } else if (end.x > centerX + 100) {
-                    // Place to the right
-                    x = end.x;
-                    y = end.y - 30;
-                    orientation = 'horizontal';
-                    gameState.openEnds.push({ value: rotatedDomino[1], x: x + 150, y: y + 30 });
-                } else if (end.y < centerY) {
-                    // Place above
-                    x = end.x - 60;
-                    y = end.y - 120;
-                    orientation = 'vertical';
-                    gameState.openEnds.push({ value: rotatedDomino[0], x: x + 60, y: y - 30 });
+            computerTurn() {
+                // Advanced AI logic
+                const validMoves = this.findValidMoves();
+                if (validMoves.length > 0) {
+                    const move = this.selectBestMove(validMoves);
+                    this.playComputerMove(move);
+                } else if (this.boneyard.length > 0) {
+                    this.computerDraw();
                 } else {
-                    // Place below
-                    x = end.x - 60;
-                    y = end.y;
-                    orientation = 'vertical';
-                    gameState.openEnds.push({ value: rotatedDomino[1], x: x + 60, y: y + 150 });
-                }
-                
-                // Remove the used end
-                gameState.openEnds.splice(endIndex, 1);
-                
-                // If it's a double, add both ends
-                if (rotatedDomino[0] === rotatedDomino[1]) {
-                    if (orientation === 'horizontal') {
-                        gameState.openEnds.push(
-                            { value: rotatedDomino[0], x: x + 60, y: y - 30 },
-                            { value: rotatedDomino[1], x: x + 60, y: y + 90 }
-                        );
-                        orientation = 'vertical';
-                    } else {
-                        gameState.openEnds.push(
-                            { value: rotatedDomino[0], x: x - 30, y: y + 60 },
-                            { value: rotatedDomino[1], x: x + 90, y: y + 60 }
-                        );
-                        orientation = 'horizontal';
-                    }
+                    this.passTurn();
                 }
             }
-            
-            // Add to board
-            gameState.board.push({
-                value: rotatedDomino,
-                orientation,
-                x,
-                y
-            });
-            
-            // Remove from player's hand
-            gameState.players[0].dominoes.splice(dominoIndex, 1);
-            selectedDomino = null;
-            
-            // Check for win
-            if (gameState.players[0].dominoes.length === 0) {
-                endGame(0);
-                return;
+
+            findValidMoves() {
+                return this.openEnds.flatMap((end, endIndex) => 
+                    this.currentPlayer.hand
+                        .filter(domino => this.isValidPlay(domino, end.value))
+                        .map(domino => ({ domino, endIndex }))
+                );
             }
-            
-            // Switch to computer
-            gameState.currentPlayer = 1;
-            isCurrentPlayer = false;
-            
-            // Update UI
-            updateGameUI();
-            
-            // Computer's turn
-            setTimeout(computerMove, 1000);
-        }
 
-        // Computer makes a move
-        function computerMove() {
-            if (gameState.gameOver) return;
-            
-            const computer = gameState.players[1];
-            let played = false;
-            
-            // Try to play a domino on any open end
-            for (let endIndex = 0; endIndex < gameState.openEnds.length; endIndex++) {
-                const end = gameState.openEnds[endIndex];
-                
-                for (let i = 0; i < computer.dominoes.length; i++) {
-                    const domino = computer.dominoes[i];
-                    
-                    if (domino[0] === end.value || domino[1] === end.value) {
-                        // Rotate domino if needed
-                        const rotatedDomino = domino[0] === end.value ? domino : [domino[1], domino[0]];
-                        
-                        // Calculate position
-                        const centerX = dominoChain.offsetWidth / 2;
-                        const centerY = dominoChain.offsetHeight / 2;
-                        
-                        let x, y, orientation;
-                        
-                        if (end.x < centerX) {
-                            // Place to the left
-                            x = end.x - 120;
-                            y = end.y - 30;
-                            orientation = 'horizontal';
-                            gameState.openEnds.push({ value: rotatedDomino[0], x: x - 30, y: y + 30 });
-                        } else if (end.x > centerX + 100) {
-                            // Place to the right
-                            x = end.x;
-                            y = end.y - 30;
-                            orientation = 'horizontal';
-                            gameState.openEnds.push({ value: rotatedDomino[1], x: x + 150, y: y + 30 });
-                        } else if (end.y < centerY) {
-                            // Place above
-                            x = end.x - 60;
-                            y = end.y - 120;
-                            orientation = 'vertical';
-                            gameState.openEnds.push({ value: rotatedDomino[0], x: x + 60, y: y - 30 });
-                        } else {
-                            // Place below
-                            x = end.x - 60;
-                            y = end.y;
-                            orientation = 'vertical';
-                            gameState.openEnds.push({ value: rotatedDomino[1], x: x + 60, y: y + 150 });
-                        }
-                        
-                        // Remove the used end
-                        gameState.openEnds.splice(endIndex, 1);
-                        
-                        // If it's a double, add both ends
-                        if (rotatedDomino[0] === rotatedDomino[1]) {
-                            if (orientation === 'horizontal') {
-                                gameState.openEnds.push(
-                                    { value: rotatedDomino[0], x: x + 60, y: y - 30 },
-                                    { value: rotatedDomino[1], x: x + 60, y: y + 90 }
-                                );
-                                orientation = 'vertical';
-                            } else {
-                                gameState.openEnds.push(
-                                    { value: rotatedDomino[0], x: x - 30, y: y + 60 },
-                                    { value: rotatedDomino[1], x: x + 90, y: y + 60 }
-                                );
-                                orientation = 'horizontal';
-                            }
-                        }
-                        
-                        // Add to board
-                        gameState.board.push({
-                            value: rotatedDomino,
-                            orientation,
-                            x,
-                            y
-                        });
-                        
-                        // Remove from computer's hand
-                        computer.dominoes.splice(i, 1);
-                        
-                        // Check for win
-                        if (computer.dominoes.length === 0) {
-                            endGame(1);
-                            return;
-                        }
-                        
-                        played = true;
-                        break;
-                    }
-                }
-                
-                if (played) break;
+            selectBestMove(moves) {
+                // Prioritize playing doubles and high-value dominoes
+                return moves.reduce((best, current) => {
+                    const currentScore = current.domino[0] + current.domino[1];
+                    const bestScore = best.domino[0] + best.domino[1];
+                    return currentScore > bestScore ? current : best;
+                });
             }
-            
-            if (!played) {
-                // Try to draw from stock
-                if (gameState.stock.length > 0) {
-                    const drawnDomino = gameState.stock.pop();
-                    computer.dominoes.push(drawnDomino);
-                } else {
-                    // Computer passes
-                    if (canPass()) {
-                        // Do nothing, just switch turns
-                    }
-                }
+
+            endGame() {
+                // Calculate scores and handle game end
+                alert('Game Over!');
             }
-            
-            // Switch back to player
-            gameState.currentPlayer = 0;
-            isCurrentPlayer = true;
-            
-            // Update UI
-            updateGameUI();
-        }
 
-        // Draw a domino from the stock
-        function drawDomino() {
-            if (gameState.stock.length === 0) return;
-            
-            // Take first domino from stock
-            const drawnDomino = gameState.stock.pop();
-            gameState.players[0].dominoes.push(drawnDomino);
-            
-            // Update UI
-            updateGameUI();
-        }
+            get humanPlayer() {
+                return this.players.find(p => p.isHuman);
+            }
 
-        // Pass turn
-        function passTurn() {
-            if (!canPass()) return;
-            
-            // Switch to computer
-            gameState.currentPlayer = 1;
-            isCurrentPlayer = false;
-            
-            // Update UI
-            updateGameUI();
-            
-            // Computer's turn
-            setTimeout(computerMove, 1000);
-        }
+            updateControls() {
+                document.getElementById('passButton').disabled = !this.canPass();
+                document.getElementById('drawButton').disabled = this.boneyard.length === 0;
+            }
 
-        // Check if player can pass
-        function canPass() {
-            // Can't pass if stock has dominoes left
-            if (gameState.stock.length > 0) return false;
-            
-            // Can't pass if you can play a domino
-            const player = gameState.players[gameState.currentPlayer];
-            return !player.dominoes.some(domino => 
-                gameState.openEnds.some(end => 
-                    domino[0] === end.value || domino[1] === end.value
-                )
-            );
-        }
+            canPass() {
+                return this.boneyard.length === 0 && 
+                       !this.humanPlayer.hand.some(d => 
+                           this.openEnds.some(e => this.isValidPlay(d, e.value)));
+            }
 
-        // End the game
-        function endGame(winnerId) {
-            // Calculate scores
-            const winner = gameState.players[winnerId];
-            const loser = gameState.players[winnerId === 0 ? 1 : 0];
-            
-            // Winner gets points equal to sum of loser's dominoes
-            const points = sumDominoes(loser.dominoes);
-            winner.score += points;
-            
-            gameState.gameOver = true;
-            gameState.winner = winnerId;
-            
-            alert(`${winner.name} wins this round with ${points} points!`);
-            
-            // Start a new round
-            startNewRound();
-        }
-
-        // Start a new round
-        function startNewRound() {
-            // Generate new domino set
-            const dominoSet = generateDominoSet();
-            shuffleArray(dominoSet);
-
-            // Deal dominoes
-            gameState.players[0].dominoes = dominoSet.slice(0, 7);
-            gameState.players[1].dominoes = dominoSet.slice(7, 14);
-            gameState.stock = dominoSet.slice(14);
-            gameState.board = [];
-            gameState.openEnds = [];
-            gameState.gameOver = false;
-            
-            // Alternate starting player
-            gameState.currentPlayer = gameState.winner;
-            isCurrentPlayer = gameState.players[gameState.currentPlayer].isHuman;
-            
-            // Update UI
-            updateGameUI();
-            
-            // If computer starts, make a move
-            if (!isCurrentPlayer) {
-                setTimeout(computerMove, 1000);
+            updateBoneyard() {
+                document.getElementById('boneyardCount').textContent = this.boneyard.length;
             }
         }
 
-        // Helper functions
-        function generateDominoSet() {
-            const dominoes = [];
-            for (let i = 0; i <= 6; i++) {
-                for (let j = i; j <= 6; j++) {
-                    dominoes.push([i, j]);
-                }
-            }
-            return dominoes;
-        }
-
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-        }
-
-        function sumDominoes(dominoes) {
-            return dominoes.reduce((sum, domino) => sum + domino[0] + domino[1], 0);
-        }
-
-        // Initialize the game when DOM is loaded
-        document.addEventListener('DOMContentLoaded', init);
+        // Start the game when loaded
+        window.addEventListener('load', () => new DominoGame());
     </script>
 </body>
 </html>
