@@ -121,13 +121,1119 @@
 
         function calculateResult() {
             try {
-                currentInput = eval(currentInput).toString();
-                updateDisplay();
-            } catch {
-                currentInput = 'Error';
+                currentInput = e<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+
+        .calculator {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .display {
+            width: 100%;
+            padding: 20px;
+            background-color: #333;
+            color: white;
+            text-align: right;
+            font-size: 2em;
+            box-sizing: border-box;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+        }
+
+        .buttons button {
+            padding: 20px;
+            font-size: 1.5em;
+            border: none;
+            background-color: #fff;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .buttons button:active {
+            background-color: #ddd;
+        }
+
+        .buttons .operator {
+            background-color: #f09235;
+            color: white;
+        }
+
+        .buttons .equal {
+            background-color: #4CAF50;
+            color: white;
+            grid-column: span 4;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="display" id="display">0</div>
+        <div class="buttons">
+            <button class="operator" onclick="clearDisplay()">C</button>
+            <button class="operator" onclick="appendOperator('/')">/</button>
+            <button class="operator" onclick="appendOperator('*')">*</button>
+            <button class="operator" onclick="appendOperator('-')">-</button>
+            <button onclick="appendNumber(7)">7</button>
+            <button onclick="appendNumber(8)">8</button>
+            <button onclick="appendNumber(9)">9</button>
+            <button class="operator" onclick="appendOperator('+')">+</button>
+            <button onclick="appendNumber(4)">4</button>
+            <button onclick="appendNumber(5)">5</button>
+            <button onclick="appendNumber(6)">6</button>
+            <button class="operator" onclick="appendOperator('%')">%</button>
+            <button onclick="appendNumber(1)">1</button>
+            <button onclick="appendNumber(2)">2</button>
+            <button onclick="appendNumber(3)">3</button>
+            <button class="operator" onclick="calculateResult()">=</button>
+            <button onclick="appendNumber(0)">0</button>
+            <button onclick="appendDecimal()">.</button>
+        </div>
+    </div>
+
+    <script>
+        let display = document.getElementById('display');
+        let currentInput = '';
+
+        function updateDisplay() {
+            display.textContent = currentInput || '0';
+        }
+
+        function appendNumber(number) {
+            currentInput += number;
+            updateDisplay();
+        }
+
+        function appendDecimal() {
+            if (!currentInput.includes('.')) {
+                currentInput += '.';
                 updateDisplay();
             }
         }
+
+        function appendOperator(operator) {
+            if (currentInput !== '') {
+                currentInput += operator;
+                updateDisplay();
+            }
+        }
+
+        function clearDisplay() {
+            currentInput = '';
+            updateDisplay();
+        }
+
+        function calculateResult() {
+            try {
+                currentInput = eval(currentInput).toString();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Domino Game</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            color: #333;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+
+        #app {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 10px;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            padding: 10px 0;
+            background-color: #4a6fa5;
+            color: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .board {
+            background-color: #e8f4f8;
+            border-radius: 8px;
+            padding: 10px;
+            min-height: 120px;
+            position: relative;
+            overflow-x: auto;
+            white-space: nowrap;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+        }
+
+        .domino-chain {
+            display: inline-flex;
+            align-items: center;
+            min-height: 100px;
+            padding: 5px 0;
+        }
+
+        .domino {
+            width: 40px;
+            height: 80px;
+            background-color: white;
+            border-radius: 5px;
+            margin: 0 -10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.2);
+            position: relative;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+            z-index: 1;
+        }
+
+        .domino.horizontal {
+            width: 80px;
+            height: 40px;
+            flex-direction: row;
+            padding: 0 5px;
+        }
+
+        .domino.selected {
+            transform: translateY(-15px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+
+        .domino .pip {
+            width: 8px;
+            height: 8px;
+            background-color: #333;
+            border-radius: 50%;
+        }
+
+        .domino .pip-row {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .domino .pip-row.center {
+            justify-content: space-between;
+            width: 100%;
+            padding: 0 5px;
+        }
+
+        .player-area {
+            background-color: #4a6fa5;
+            border-radius: 8px;
+            padding: 10px;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .player-hand {
+            display: flex;
+            gap: 5px;
+            padding: 10px 0;
+            overflow-x: auto;
+            min-height: 90px;
+            align-items: center;
+        }
+
+        .player-hand::-webkit-scrollbar {
+            height: 5px;
+        }
+
+        .player-hand::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
+            border-radius: 5px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background-color: #ff9f1c;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            flex-grow: 1;
+            transition: background-color 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #ffbf69;
+        }
+
+        .game-status {
+            text-align: center;
+            margin: 10px 0;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .mode-selection {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+
+        .mode-selection h2 {
+            margin-bottom: 15px;
+            color: #4a6fa5;
+            text-align: center;
+        }
+
+        .mode-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .mode-option {
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .mode-option:hover {
+            background-color: #e0e0e0;
+        }
+
+        .mode-option h3 {
+            color: #4a6fa5;
+            margin-bottom: 5px;
+        }
+
+        .end-screen {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .end-screen h2 {
+            color: #4a6fa5;
+            margin-bottom: 15px;
+        }
+
+        .player-score {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        @media (max-width: 400px) {
+            .domino {
+                width: 35px;
+                height: 70px;
+            }
+            
+            .domino.horizontal {
+                width: 70px;
+                height: 35px;
+            }
+            
+            button {
+                padding: 8px 10px;
+                font-size: 14px;
+            }
+        }
+
+        /* Animation classes */
+        @keyframes slideIn {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .animate-slide-in {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-in forwards;
+        }
+
+        /* Domino pip configurations */
+        .pip-1 { justify-content: center; align-items: center; }
+        .pip-2 { justify-content: space-between; }
+        .pip-2 .pip:first-child { align-self: flex-start; }
+        .pip-2 .pip:last-child { align-self: flex-end; }
+        .pip-3 { justify-content: space-between; }
+        .pip-3 .pip:first-child { align-self: flex-start; }
+        .pip-3 .pip:last-child { align-self: flex-end; }
+        .pip-3 .pip:nth-child(2) { align-self: center; }
+        .pip-4, .pip-6 { justify-content: space-between; flex-wrap: wrap; }
+        .pip-4 .pip-row, .pip-6 .pip-row { width: 100%; display: flex; justify-content: space-between; }
+        .pip-5 { justify-content: space-between; flex-wrap: wrap; }
+        .pip-5 .pip-row { width: 100%; display: flex; justify-content: space-between; }
+        .pip-5 .pip-row.center { justify-content: center; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="header">
+            <h1>Domino Game</h1>
+        </div>
+
+        <!-- Mode Selection Screen -->
+        <div id="modeSelectionScreen" class="mode-selection animate-fade-in">
+            <h2>Select Game Mode</h2>
+            <div class="mode-options">
+                <div class="mode-option" data-mode="block">
+                    <h3>Block Dominoes</h3>
+                    <p>Classic domino game where players must match numbers</p>
+                </div>
+                <div class="mode-option" data-mode="draw">
+                    <h3>Draw Dominoes</h3>
+                    <p>Draw from the boneyard when you can't play</p>
+                </div>
+                <div class="mode-option" data-mode="mexican">
+                    <h3>Mexican Train</h3>
+                    <p>Play multiple trains with special rules</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" style="display: none;">
+            <div class="game-status" id="gameStatus">Starting game...</div>
+            
+            <div class="game-container">
+                <div class="board">
+                    <div class="domino-chain" id="dominoChain"></div>
+                </div>
+
+                <div class="player-area">
+                    <h3>Your Hand</h3>
+                    <div class="player-hand" id="playerHand"></div>
+                    <div class="controls">
+                        <button id="drawBtn">Draw</button>
+                        <button id="passBtn" disabled>Pass</button>
+                        <button id="saveBtn">Save Game</button>
+                        <button id="quitBtn">Quit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameOverScreen" style="display: none;">
+            <div class="end-screen">
+                <h2>Game Over!</h2>
+                <div id="winnerMessage"></div>
+                <div id="scoresList"></div>
+                <button id="playAgainBtn">Play Again</button>
+                <button id="returnToMenuBtn">Return to Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+        const modeSelectionScreen = document.getElementById('modeSelectionScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const playerHand = document.getElementById('playerHand');
+        const dominoChain = document.getElementById('dominoChain');
+        const gameStatus = document.getElementById('gameStatus');
+        const drawBtn = document.getElementById('drawBtn');
+        const passBtn = document.getElementById('passBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const quitBtn = document.getElementById('quitBtn');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+        const returnToMenuBtn = document.getElementById('returnToMenuBtn');
+        const winnerMessage = document.getElementById('winnerMessage');
+        const scoresList = document.getElementById('scoresList');
+        const modeOptions = document.querySelectorAll('.mode-option');
+
+        // Game state
+        let gameState = {
+            mode: '',
+            players: [],
+            currentPlayer: 0,
+            board: [],
+            stock: [],
+            lastLeftValue: null,
+            lastRightValue: null,
+            gameOver: false,
+            winner: null
+        };
+
+        let playerDominoes = [];
+        let isCurrentPlayer = false;
+
+        // Initialize the game
+        function init() {
+            // Check for saved game
+            const savedGame = localStorage.getItem('dominoGameState');
+            if (savedGame) {
+                if (confirm('Would you like to continue your saved game?')) {
+                    loadGame();
+                    return;
+                } else {
+                    localStorage.removeItem('dominoGameState');
+                }
+            }
+            
+            // Set up event listeners
+            modeOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    const mode = option.dataset.mode;
+                    startNewGame(mode);
+                });
+            });
+
+            drawBtn.addEventListener('click', drawDomino);
+            passBtn.addEventListener('click', passTurn);
+            saveBtn.addEventListener('click', saveGame);
+            quitBtn.addEventListener('click', returnToMenu);
+            playAgainBtn.addEventListener('click', playAgain);
+            returnToMenuBtn.addEventListener('click', returnToMenu);
+
+            // Listen for player clicks on dominoes
+            playerHand.addEventListener('click', (e) => {
+                if (!isCurrentPlayer) return;
+                
+                const dominoEl = e.target.closest('.domino');
+                if (!dominoEl) return;
+                
+                const index = parseInt(dominoEl.dataset.index);
+                const domino = playerDominoes[index];
+                
+                // Check if domino can be played
+                if (canPlayDomino(domino)) {
+                    playDomino(index);
+                } else {
+                    // Show feedback that move is invalid
+                    dominoEl.classList.add('selected');
+                    setTimeout(() => {
+                        dominoEl.classList.remove('selected');
+                    }, 500);
+                }
+            });
+
+            // Listen for player clicks on board dominoes (for placing)
+            dominoChain.addEventListener('click', (e) => {
+                if (!isCurrentPlayer) return;
+                
+                const dominoEl = e.target.closest('.domino');
+                if (!dominoEl) return;
+                
+                const selectedDomino = document.querySelector('.domino.selected');
+                if (!selectedDomino) return;
+                
+                const index = parseInt(selectedDomino.dataset.index);
+                const domino = playerDominoes[index];
+                const boardIndex = parseInt(dominoEl.dataset.boardIndex);
+                
+                // Determine placement (left or right)
+                const isLeft = boardIndex === 0;
+                placeDomino(index, isLeft);
+            });
+        }
+
+        // Start a new game
+        function startNewGame(mode) {
+            gameState = {
+                mode: mode,
+                players: [
+                    { id: 0, name: 'Player 1', dominoes: [], score: 0 },
+                    { id: 1, name: 'Computer', dominoes: [], score: 0 }
+                ],
+                currentPlayer: 0,
+                board: [],
+                stock: [],
+                lastLeftValue: null,
+                lastRightValue: null,
+                gameOver: false,
+                winner: null
+            };
+
+            // Generate domino set
+            const dominoSet = generateDominoSet();
+            shuffleArray(dominoSet);
+
+            // Deal dominoes
+            const dominoesPerPlayer = 7;
+            gameState.players[0].dominoes = dominoSet.slice(0, dominoesPerPlayer);
+            gameState.players[1].dominoes = dominoSet.slice(dominoesPerPlayer, dominoesPerPlayer * 2);
+            gameState.stock = dominoSet.slice(dominoesPerPlayer * 2);
+
+            // Determine who starts (player with the highest double)
+            let startingPlayer = 0;
+            let highestDouble = -1;
+            
+            gameState.players.forEach((player, index) => {
+                player.dominoes.forEach(domino => {
+                    if (domino[0] === domino[1] && domino[0] > highestDouble) {
+                        highestDouble = domino[0];
+                        startingPlayer = index;
+                    }
+                });
+            });
+            
+            // If no doubles, player with highest sum domino starts
+            if (highestDouble === -1) {
+                let highestSum = -1;
+                
+                gameState.players.forEach((player, index) => {
+                    player.dominoes.forEach(domino => {
+                        const sum = domino[0] + domino[1];
+                        if (sum > highestSum) {
+                            highestSum = sum;
+                            startingPlayer = index;
+                        }
+                    });
+                });
+            }
+
+            gameState.currentPlayer = startingPlayer;
+            isCurrentPlayer = startingPlayer === 0;
+
+            // Show game screen
+            modeSelectionScreen.style.display = 'none';
+            gameScreen.style.display = 'block';
+            gameOverScreen.style.display = 'none';
+
+            // Update UI
+            updateGameUI();
+
+            // If computer starts, make a move
+            if (!isCurrentPlayer) {
+                setTimeout(computerMove, 1000);
+            }
+        }
+
+        // Load saved game
+        function loadGame() {
+            const savedGame = JSON.parse(localStorage.getItem('dominoGameState'));
+            if (savedGame) {
+                gameState = savedGame;
+                isCurrentPlayer = gameState.currentPlayer === 0;
+                
+                // Show game screen
+                modeSelectionScreen.style.display = 'none';
+                gameScreen.style.display = 'block';
+                gameOverScreen.style.display = 'none';
+
+                // Update UI
+                updateGameUI();
+
+                // If computer's turn, make a move
+                if (!isCurrentPlayer) {
+                    setTimeout(computerMove, 1000);
+                }
+            }
+        }
+
+        // Save game
+        function saveGame() {
+            localStorage.setItem('dominoGameState', JSON.stringify(gameState));
+            alert('Game saved! You can continue later.');
+        }
+
+        // Update game UI
+        function updateGameUI() {
+            // Update game status
+            if (isCurrentPlayer) {
+                gameStatus.textContent = 'Your turn!';
+                gameStatus.style.color = '#4CAF50';
+            } else {
+                gameStatus.textContent = "Computer's turn";
+                gameStatus.style.color = '#333';
+            }
+            
+            // Update board
+            updateBoard(gameState.board);
+            
+            // Update player's hand
+            playerDominoes = gameState.players[0].dominoes;
+            updatePlayerHand(playerDominoes, isCurrentPlayer);
+            
+            // Update buttons
+            drawBtn.disabled = !isCurrentPlayer || gameState.stock.length === 0;
+            passBtn.disabled = !isCurrentPlayer || !canPass();
+        }
+
+        // Update the board display
+        function updateBoard(board) {
+            dominoChain.innerHTML = '';
+            
+            if (board.length === 0) return;
+            
+            // Track left and right values
+            gameState.lastLeftValue = board[0][0];
+            gameState.lastRightValue = board[board.length - 1][1];
+            
+            board.forEach((domino, index) => {
+                const dominoEl = createDominoElement(domino, index);
+                dominoChain.appendChild(dominoEl);
+            });
+        }
+
+        // Update player's hand
+        function updatePlayerHand(dominoes, isCurrentTurn) {
+            playerHand.innerHTML = '';
+            
+            dominoes.forEach((domino, index) => {
+                const dominoEl = createDominoElement(domino, index);
+                dominoEl.classList.add('player-domino');
+                if (isCurrentTurn) {
+                    dominoEl.style.cursor = 'pointer';
+                }
+                playerHand.appendChild(dominoEl);
+            });
+        }
+
+        // Create a domino element
+        function createDominoElement(domino, index) {
+            const dominoEl = document.createElement('div');
+            dominoEl.className = 'domino';
+            dominoEl.dataset.index = index;
+            
+            if (domino.isHorizontal) {
+                dominoEl.classList.add('horizontal');
+            }
+            
+            // Add pips
+            const leftValue = domino[0];
+            const rightValue = domino[1];
+            
+            const leftPips = document.createElement('div');
+            leftPips.className = `pip-side pip-${leftValue}`;
+            
+            const rightPips = document.createElement('div');
+            rightPips.className = `pip-side pip-${rightValue}`;
+            
+            // Add pips based on value
+            for (let i = 0; i < leftValue; i++) {
+                const pip = document.createElement('div');
+                pip.className = 'pip';
+                leftPips.appendChild(pip);
+            }
+            
+            for (let i = 0; i < rightValue; i++) {
+                const pip = document.createElement('div');
+                pip.className = 'pip';
+                rightPips.appendChild(pip);
+            }
+            
+            dominoEl.appendChild(leftPips);
+            dominoEl.appendChild(rightPips);
+            
+            return dominoEl;
+        }
+
+        // Check if a domino can be played
+        function canPlayDomino(domino) {
+            if (gameState.board.length === 0) {
+                return true; // First domino can always be played
+            }
+            
+            const leftValue = domino[0];
+            const rightValue = domino[1];
+            
+            return leftValue === gameState.lastLeftValue || leftValue === gameState.lastRightValue ||
+                   rightValue === gameState.lastLeftValue || rightValue === gameState.lastRightValue;
+        }
+
+        // Play a domino
+        function playDomino(index) {
+            const domino = playerDominoes[index];
+            if (!domino) return;
+            
+            // Check if we need to select placement (for non-first domino)
+            if (gameState.board.length > 0) {
+                const selectedDomino = document.querySelector('.domino.selected');
+                if (selectedDomino) {
+                    selectedDomino.classList.remove('selected');
+                }
+                
+                // Select the domino and wait for placement click
+                const dominoEl = playerHand.children[index];
+                dominoEl.classList.add('selected');
+                return;
+            }
+            
+            // For first domino, just place it
+            placeDomino(index, true);
+        }
+
+        // Place a domino on the board (left or right)
+        function placeDomino(index, isLeft) {
+            const domino = playerDominoes[index];
+            if (!domino) return;
+            
+            // Determine if we need to rotate the domino
+            let rotatedDomino = [...domino];
+            let isRotated = false;
+            
+            if (gameState.board.length > 0) {
+                if (isLeft) {
+                    // Placing on left - domino's right must match board's left
+                    if (domino[0] !== gameState.lastLeftValue && domino[1] !== gameState.lastLeftValue) {
+                        // Invalid move
+                        return;
+                    }
+                    
+                    if (domino[1] === gameState.lastLeftValue) {
+                        // No rotation needed
+                        rotatedDomino = domino;
+                    } else {
+                        // Rotate the domino
+                        rotatedDomino = [domino[1], domino[0]];
+                        isRotated = true;
+                    }
+                } else {
+                    // Placing on right - domino's left must match board's right
+                    if (domino[0] !== gameState.lastRightValue && domino[1] !== gameState.lastRightValue) {
+                        // Invalid move
+                        return;
+                    }
+                    
+                    if (domino[0] === gameState.lastRightValue) {
+                        // No rotation needed
+                        rotatedDomino = domino;
+                    } else {
+                        // Rotate the domino
+                        rotatedDomino = [domino[1], domino[0]];
+                        isRotated = true;
+                    }
+                }
+            }
+            
+            // Create updated board
+            let newBoard = [...gameState.board];
+            if (isLeft) {
+                newBoard.unshift(rotatedDomino);
+            } else {
+                newBoard.push(rotatedDomino);
+            }
+            
+            // Update player's dominoes
+            gameState.players[0].dominoes = [
+                ...gameState.players[0].dominoes.slice(0, index),
+                ...gameState.players[0].dominoes.slice(index + 1)
+            ];
+            
+            // Check for game over (player has no dominoes left)
+            if (gameState.players[0].dominoes.length === 0) {
+                endGame(0);
+                return;
+            }
+            
+            // Update game state
+            gameState.board = newBoard;
+            gameState.currentPlayer = 1; // Switch to computer
+            
+            // Update UI
+            updateGameUI();
+            
+            // Computer's turn
+            setTimeout(computerMove, 1000);
+        }
+
+        // Computer makes a move
+        function computerMove() {
+            if (gameState.gameOver) return;
+            
+            const computer = gameState.players[1];
+            let played = false;
+            
+            // Try to play a domino
+            for (let i = 0; i < computer.dominoes.length; i++) {
+                const domino = computer.dominoes[i];
+                
+                if (canPlayDomino(domino)) {
+                    // Determine placement
+                    let isLeft = true;
+                    if (gameState.board.length > 0) {
+                        if (domino[0] === gameState.lastRightValue || domino[1] === gameState.lastRightValue) {
+                            isLeft = false;
+                        }
+                    }
+                    
+                    // Rotate if needed
+                    let rotatedDomino = [...domino];
+                    if (gameState.board.length > 0) {
+                        if (isLeft && domino[1] !== gameState.lastLeftValue) {
+                            rotatedDomino = [domino[1], domino[0]];
+                        } else if (!isLeft && domino[0] !== gameState.lastRightValue) {
+                            rotatedDomino = [domino[1], domino[0]];
+                        }
+                    }
+                    
+                    // Create updated board
+                    let newBoard = [...gameState.board];
+                    if (isLeft) {
+                        newBoard.unshift(rotatedDomino);
+                    } else {
+                        newBoard.push(rotatedDomino);
+                    }
+                    
+                    // Update computer's dominoes
+                    computer.dominoes = [
+                        ...computer.dominoes.slice(0, i),
+                        ...computer.dominoes.slice(i + 1)
+                    ];
+                    
+                    // Update game state
+                    gameState.board = newBoard;
+                    
+                    // Check for game over
+                    if (computer.dominoes.length === 0) {
+                        endGame(1);
+                        return;
+                    }
+                    
+                    played = true;
+                    break;
+                }
+            }
+            
+            if (!played) {
+                // Try to draw from stock
+                if (gameState.stock.length > 0) {
+                    const drawnDomino = gameState.stock.pop();
+                    computer.dominoes.push(drawnDomino);
+                    
+                    // Check if the drawn domino can be played
+                    for (let i = 0; i < computer.dominoes.length; i++) {
+                        const domino = computer.dominoes[i];
+                        if (canPlayDomino(domino)) {
+                            // Play the domino immediately
+                            let isLeft = true;
+                            if (gameState.board.length > 0) {
+                                if (domino[0] === gameState.lastRightValue || domino[1] === gameState.lastRightValue) {
+                                    isLeft = false;
+                                }
+                            }
+                            
+                            let rotatedDomino = [...domino];
+                            if (gameState.board.length > 0) {
+                                if (isLeft && domino[1] !== gameState.lastLeftValue) {
+                                    rotatedDomino = [domino[1], domino[0]];
+                                } else if (!isLeft && domino[0] !== gameState.lastRightValue) {
+                                    rotatedDomino = [domino[1], domino[0]];
+                                }
+                            }
+                            
+                            let newBoard = [...gameState.board];
+                            if (isLeft) {
+                                newBoard.unshift(rotatedDomino);
+                            } else {
+                                newBoard.push(rotatedDomino);
+                            }
+                            
+                            computer.dominoes = [
+                                ...computer.dominoes.slice(0, i),
+                                ...computer.dominoes.slice(i + 1)
+                            ];
+                            
+                            gameState.board = newBoard;
+                            
+                            // Check for game over
+                            if (computer.dominoes.length === 0) {
+                                endGame(1);
+                                return;
+                            }
+                            
+                            played = true;
+                            break;
+                        }
+                    }
+                } else {
+                    // Computer passes
+                    if (canPass()) {
+                        // Do nothing, just switch turns
+                    }
+                }
+            }
+            
+            // Switch back to player
+            gameState.currentPlayer = 0;
+            isCurrentPlayer = true;
+            
+            // Update UI
+            updateGameUI();
+        }
+
+        // Draw a domino from the stock
+        function drawDomino() {
+            if (gameState.stock.length === 0) return;
+            
+            // Take first domino from stock
+            const drawnDomino = gameState.stock.pop();
+            gameState.players[0].dominoes.push(drawnDomino);
+            
+            // Update UI
+            updateGameUI();
+        }
+
+        // Pass turn
+        function passTurn() {
+            if (!canPass()) return;
+            
+            // Switch to computer
+            gameState.currentPlayer = 1;
+            isCurrentPlayer = false;
+            
+            // Update UI
+            updateGameUI();
+            
+            // Computer's turn
+            setTimeout(computerMove, 1000);
+        }
+
+        // Check if player can pass
+        function canPass() {
+            // Can't pass if stock has dominoes left
+            if (gameState.stock.length > 0) return false;
+            
+            // Can't pass if you can play a domino
+            return !gameState.players[gameState.currentPlayer].dominoes.some(domino => canPlayDomino(domino));
+        }
+
+        // End the game
+        function endGame(winnerId) {
+            // Calculate scores
+            const winner = gameState.players[winnerId];
+            const loser = gameState.players[winnerId === 0 ? 1 : 0];
+            
+            // Winner gets points equal to sum of loser's dominoes
+            const points = sumDominoes(loser.dominoes);
+            winner.score += points;
+            
+            gameState.gameOver = true;
+            gameState.winner = winnerId;
+            
+            // Show game over screen
+            gameScreen.style.display = 'none';
+            gameOverScreen.style.display = 'block';
+            
+            // Update winner message
+            if (winnerId === 0) {
+                winnerMessage.textContent = `You win with ${points} points!`;
+            } else {
+                winnerMessage.textContent = `Computer wins with ${points} points!`;
+            }
+            
+            // Update scores list
+            scoresList.innerHTML = '';
+            gameState.players.forEach(player => {
+                const scoreEl = document.createElement('div');
+                scoreEl.className = 'player-score';
+                scoreEl.innerHTML = `
+                    <span>${player.name}</span>
+                    <span>${player.score} points</span>
+                `;
+                scoresList.appendChild(scoreEl);
+            });
+            
+            // Clear saved game
+            localStorage.removeItem('dominoGameState');
+        }
+
+        // Play again
+        function playAgain() {
+            startNewGame(gameState.mode);
+        }
+
+        // Return to menu
+        function returnToMenu() {
+            if (confirm('Are you sure you want to quit? Your current game will be lost.')) {
+                localStorage.removeItem('dominoGameState');
+                
+                gameScreen.style.display = 'none';
+                gameOverScreen.style.display = 'none';
+                modeSelectionScreen.style.display = 'block';
+            }
+        }
+
+        // Helper functions
+        function generateDominoSet() {
+            const dominoes = [];
+            for (let i = 0; i <= 6; i++) {
+                for (let j = i; j <= 6; j++) {
+                    dominoes.push([i, j]);
+                }
+            }
+            return dominoes;
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function sumDominoes(dominoes) {
+            return dominoes.reduce((sum, domino) => sum + domino[0] + domino[1], 0);
+        }
+
+        // Initialize the game when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
