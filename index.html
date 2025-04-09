@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Domino Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentic Domino Game</title>
     <style>
         * {
             box-sizing: border-box;
@@ -14,14 +14,14 @@
         }
 
         body {
-            background-color: #f0f2f5;
-            color: #333;
+            background-color: #2c3e50;
+            color: #ecf0f1;
             overflow-x: hidden;
             touch-action: manipulation;
         }
 
         #app {
-            max-width: 100%;
+            max-width: 800px;
             margin: 0 auto;
             padding: 10px;
             position: relative;
@@ -30,219 +30,408 @@
 
         .header {
             text-align: center;
-            padding: 10px 0;
-            background-color: #4a6fa5;
+            padding: 15px 0;
+            background-color: #3498db;
             color: white;
             border-radius: 8px;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
         .game-container {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 15px;
         }
 
         .board {
-            background-color: #e8f4f8;
+            background-color: #34495e;
             border-radius: 8px;
-            padding: 10px;
-            min-height: 120px;
+            padding: 15px;
+            min-height: 150px;
             position: relative;
             overflow-x: auto;
             white-space: nowrap;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
-            margin-bottom: 10px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.2);
+            margin-bottom: 15px;
+            border: 2px solid #2c3e50;
         }
 
         .domino-chain {
             display: inline-flex;
             align-items: center;
-            min-height: 100px;
-            padding: 5px 0;
+            min-height: 120px;
+            padding: 10px 0;
         }
 
         .domino {
-            width: 40px;
-            height: 80px;
+            width: 60px;
+            height: 120px;
             background-color: white;
-            border-radius: 5px;
-            margin: 0 -10px;
+            border-radius: 8px;
+            margin: 0 -18px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
-            padding: 5px 0;
-            box-shadow: 0 3px 5px rgba(0,0,0,0.2);
+            padding: 8px 0;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
             position: relative;
             transition: transform 0.3s ease;
             cursor: pointer;
             z-index: 1;
+            border: 2px solid #bdc3c7;
         }
 
         .domino.horizontal {
-            width: 80px;
-            height: 40px;
+            width: 120px;
+            height: 60px;
             flex-direction: row;
-            padding: 0 5px;
+            padding: 0 8px;
+        }
+
+        .domino.double {
+            justify-content: center;
         }
 
         .domino.selected {
-            transform: translateY(-15px);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+            transform: translateY(-20px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
             z-index: 10;
+            border-color: #e74c3c;
+        }
+
+        .domino .half {
+            width: 100%;
+            height: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+            position: relative;
+        }
+
+        .domino.horizontal .half {
+            width: 50%;
+            height: 100%;
+            flex-direction: row;
         }
 
         .domino .pip {
-            width: 8px;
-            height: 8px;
-            background-color: #333;
+            width: 10px;
+            height: 10px;
+            background-color: #2c3e50;
             border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: inset 0 0 3px rgba(0,0,0,0.3);
         }
 
-        .domino .pip-row {
-            display: flex;
-            justify-content: center;
-            gap: 5px;
+        .domino .divider {
+            width: 90%;
+            height: 3px;
+            background-color: #bdc3c7;
+            border-radius: 3px;
         }
 
-        .domino .pip-row.center {
-            justify-content: space-between;
-            width: 100%;
-            padding: 0 5px;
+        .domino.horizontal .divider {
+            width: 3px;
+            height: 90%;
         }
 
         .player-area {
-            background-color: #4a6fa5;
+            background-color: #3498db;
             border-radius: 8px;
-            padding: 10px;
+            padding: 15px;
             color: white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            margin-bottom: 15px;
+            border: 2px solid #2980b9;
         }
 
         .player-hand {
             display: flex;
-            gap: 5px;
-            padding: 10px 0;
+            gap: 10px;
+            padding: 15px 0;
             overflow-x: auto;
-            min-height: 90px;
+            min-height: 140px;
             align-items: center;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.5) transparent;
         }
 
         .player-hand::-webkit-scrollbar {
-            height: 5px;
+            height: 8px;
         }
 
         .player-hand::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.3);
-            border-radius: 5px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 4px;
         }
 
         .controls {
             display: flex;
             gap: 10px;
-            margin-top: 10px;
+            margin-top: 15px;
             flex-wrap: wrap;
+            justify-content: center;
         }
 
         button {
-            background-color: #ff9f1c;
+            background-color: #e74c3c;
             color: white;
             border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
+            padding: 12px 20px;
+            border-radius: 6px;
             font-weight: bold;
             cursor: pointer;
             flex-grow: 1;
-            transition: background-color 0.2s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            min-width: 120px;
+            font-size: 16px;
         }
 
         button:disabled {
-            background-color: #cccccc;
+            background-color: #95a5a6;
             cursor: not-allowed;
+            opacity: 0.7;
         }
 
         button:hover:not(:disabled) {
-            background-color: #ffbf69;
+            background-color: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
 
         .game-status {
             text-align: center;
-            margin: 10px 0;
+            margin: 15px 0;
             font-weight: bold;
-            font-size: 1.1em;
+            font-size: 1.2em;
+            background-color: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-around;
+            background-color: #34495e;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .player-score {
+            text-align: center;
+            padding: 5px 10px;
+            border-radius: 4px;
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        .player-score.active {
+            background-color: #e74c3c;
+            font-weight: bold;
         }
 
         .mode-selection {
-            background-color: white;
+            background-color: #34495e;
             border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             margin-top: 20px;
         }
 
         .mode-selection h2 {
-            margin-bottom: 15px;
-            color: #4a6fa5;
+            margin-bottom: 20px;
+            color: #ecf0f1;
             text-align: center;
+            font-size: 24px;
         }
 
         .mode-options {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
         }
 
         .mode-option {
-            background-color: #f5f5f5;
-            border-radius: 5px;
-            padding: 15px;
+            background-color: #2c3e50;
+            border-radius: 8px;
+            padding: 20px;
             text-align: center;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.3s;
+            border: 2px solid #3498db;
         }
 
         .mode-option:hover {
-            background-color: #e0e0e0;
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+            background-color: #3498db;
         }
 
         .mode-option h3 {
-            color: #4a6fa5;
-            margin-bottom: 5px;
+            color: #ecf0f1;
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+
+        .mode-option p {
+            color: #bdc3c7;
+            font-size: 14px;
         }
 
         .end-screen {
             text-align: center;
-            padding: 20px;
+            padding: 30px;
+            background-color: #34495e;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
 
         .end-screen h2 {
-            color: #4a6fa5;
+            color: #ecf0f1;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .player-result {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-size: 18px;
+        }
+
+        .player-result.winner {
+            color: #2ecc71;
+            font-weight: bold;
+        }
+
+        .settings-panel {
+            background-color: #34495e;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .settings-row {
             margin-bottom: 15px;
         }
 
-        .player-score {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
+        .settings-row label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ecf0f1;
         }
 
-        @media (max-width: 400px) {
+        .settings-row select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            border: 1px solid #3498db;
+        }
+
+        .help-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            z-index: 100;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #34495e;
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            border: 2px solid #3498db;
+        }
+
+        .modal h2 {
+            color: #ecf0f1;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .modal p {
+            color: #bdc3c7;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .modal ul {
+            color: #bdc3c7;
+            margin-bottom: 15px;
+            padding-left: 20px;
+        }
+
+        .modal li {
+            margin-bottom: 8px;
+        }
+
+        .close-modal {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 15px;
+            display: block;
+            width: 100%;
+        }
+
+        @media (max-width: 600px) {
             .domino {
-                width: 35px;
-                height: 70px;
+                width: 50px;
+                height: 100px;
+                margin: 0 -15px;
             }
             
             .domino.horizontal {
-                width: 70px;
-                height: 35px;
+                width: 100px;
+                height: 50px;
+            }
+            
+            .mode-options {
+                grid-template-columns: 1fr;
             }
             
             button {
-                padding: 8px 10px;
+                padding: 10px 15px;
                 font-size: 14px;
             }
         }
@@ -259,33 +448,36 @@
         }
 
         .animate-slide-in {
-            animation: slideIn 0.3s ease-out forwards;
+            animation: slideIn 0.4s ease-out forwards;
         }
 
         .animate-fade-in {
-            animation: fadeIn 0.5s ease-in forwards;
+            animation: fadeIn 0.6s ease-in forwards;
         }
 
-        /* Domino pip configurations */
-        .pip-1 { justify-content: center; align-items: center; }
-        .pip-2 { justify-content: space-between; }
-        .pip-2 .pip:first-child { align-self: flex-start; }
-        .pip-2 .pip:last-child { align-self: flex-end; }
-        .pip-3 { justify-content: space-between; }
-        .pip-3 .pip:first-child { align-self: flex-start; }
-        .pip-3 .pip:last-child { align-self: flex-end; }
-        .pip-3 .pip:nth-child(2) { align-self: center; }
-        .pip-4, .pip-6 { justify-content: space-between; flex-wrap: wrap; }
-        .pip-4 .pip-row, .pip-6 .pip-row { width: 100%; display: flex; justify-content: space-between; }
-        .pip-5 { justify-content: space-between; flex-wrap: wrap; }
-        .pip-5 .pip-row { width: 100%; display: flex; justify-content: space-between; }
-        .pip-5 .pip-row.center { justify-content: center; }
+        /* Sound toggle */
+        .sound-toggle {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 100;
+        }
     </style>
 </head>
 <body>
     <div id="app">
         <div class="header">
-            <h1>Domino Game</h1>
+            <h1>Authentic Domino Game</h1>
         </div>
 
         <!-- Mode Selection Screen -->
@@ -294,21 +486,55 @@
             <div class="mode-options">
                 <div class="mode-option" data-mode="block">
                     <h3>Block Dominoes</h3>
-                    <p>Classic domino game where players must match numbers</p>
+                    <p>Classic domino game where players must match numbers and block opponents</p>
                 </div>
                 <div class="mode-option" data-mode="draw">
                     <h3>Draw Dominoes</h3>
-                    <p>Draw from the boneyard when you can't play</p>
+                    <p>Draw from the boneyard when you can't play a matching domino</p>
+                </div>
+                <div class="mode-option" data-mode="allfives">
+                    <h3>All Fives</h3>
+                    <p>Score points by making the open ends add up to multiples of five</p>
                 </div>
                 <div class="mode-option" data-mode="mexican">
                     <h3>Mexican Train</h3>
-                    <p>Play multiple trains with special rules</p>
+                    <p>Play multiple trains with special rules for doubles</p>
+                </div>
+            </div>
+            
+            <div class="settings-panel">
+                <h3>Game Settings</h3>
+                <div class="settings-row">
+                    <label for="playerCount">Number of Players:</label>
+                    <select id="playerCount">
+                        <option value="2">2 Players</option>
+                        <option value="3">3 Players</option>
+                        <option value="4">4 Players</option>
+                    </select>
+                </div>
+                <div class="settings-row">
+                    <label for="botDifficulty">Bot Difficulty:</label>
+                    <select id="botDifficulty">
+                        <option value="easy">Easy</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+                <div class="settings-row">
+                    <label for="pointsToWin">Points to Win:</label>
+                    <select id="pointsToWin">
+                        <option value="50">50 Points</option>
+                        <option value="100" selected>100 Points</option>
+                        <option value="150">150 Points</option>
+                        <option value="200">200 Points</option>
+                    </select>
                 </div>
             </div>
         </div>
 
         <!-- Game Screen -->
         <div id="gameScreen" style="display: none;">
+            <div class="scoreboard" id="scoreboard"></div>
             <div class="game-status" id="gameStatus">Starting game...</div>
             
             <div class="game-container">
@@ -320,10 +546,10 @@
                     <h3>Your Hand</h3>
                     <div class="player-hand" id="playerHand"></div>
                     <div class="controls">
-                        <button id="drawBtn">Draw</button>
-                        <button id="passBtn" disabled>Pass</button>
+                        <button id="drawBtn">Draw from Boneyard</button>
+                        <button id="passBtn" disabled>Pass Turn</button>
                         <button id="saveBtn">Save Game</button>
-                        <button id="quitBtn">Quit</button>
+                        <button id="quitBtn">Quit Game</button>
                     </div>
                 </div>
             </div>
@@ -340,6 +566,53 @@
             </div>
         </div>
     </div>
+
+    <!-- Help Button -->
+    <div class="help-button" id="helpButton">?</div>
+
+    <!-- Help Modal -->
+    <div class="modal" id="helpModal">
+        <div class="modal-content">
+            <h2>Domino Game Rules</h2>
+            <div id="rulesContent">
+                <h3>General Domino Rules</h3>
+                <p>Dominoes are rectangular tiles with two square ends, each marked with a number of spots (pips) or blank.</p>
+                
+                <h3>Game Modes</h3>
+                <h4>Block Dominoes</h4>
+                <ul>
+                    <li>Players take turns matching dominoes end to end</li>
+                    <li>If a player cannot play, they pass their turn</li>
+                    <li>The first player to run out of dominoes wins</li>
+                    <li>If the game is blocked, the player with the fewest dominoes wins</li>
+                </ul>
+                
+                <h4>Draw Dominoes</h4>
+                <ul>
+                    <li>Similar to Block, but players draw from the boneyard when they can't play</li>
+                    <li>The boneyard is exhausted when only 2 dominoes remain</li>
+                </ul>
+                
+                <h4>All Fives</h4>
+                <ul>
+                    <li>Players score points when the open ends add up to a multiple of five</li>
+                    <li>Each multiple of five is worth that many points (5=5, 10=10, etc.)</li>
+                    <li>The first player to reach the target score wins</li>
+                </ul>
+                
+                <h4>Mexican Train</h4>
+                <ul>
+                    <li>Players build their own "train" of dominoes</li>
+                    <li>Doubles must be covered before other plays can be made</li>
+                    <li>Special rules apply when a double is played</li>
+                </ul>
+            </div>
+            <button class="close-modal" id="closeModal">Close</button>
+        </div>
+    </div>
+
+    <!-- Sound Toggle -->
+    <button class="sound-toggle" id="soundToggle">🔊</button>
 
     <script>
         // DOM elements
@@ -358,6 +631,14 @@
         const winnerMessage = document.getElementById('winnerMessage');
         const scoresList = document.getElementById('scoresList');
         const modeOptions = document.querySelectorAll('.mode-option');
+        const scoreboard = document.getElementById('scoreboard');
+        const helpButton = document.getElementById('helpButton');
+        const helpModal = document.getElementById('helpModal');
+        const closeModal = document.getElementById('closeModal');
+        const soundToggle = document.getElementById('soundToggle');
+        const playerCountSelect = document.getElementById('playerCount');
+        const botDifficultySelect = document.getElementById('botDifficulty');
+        const pointsToWinSelect = document.getElementById('pointsToWin');
 
         // Game state
         let gameState = {
@@ -369,14 +650,33 @@
             lastLeftValue: null,
             lastRightValue: null,
             gameOver: false,
-            winner: null
+            winner: null,
+            round: 1,
+            targetScore: 100,
+            settings: {
+                playerCount: 2,
+                botDifficulty: 'medium',
+                soundEnabled: true
+            }
         };
 
         let playerDominoes = [];
         let isCurrentPlayer = false;
+        let audioContext;
+        let sounds = {};
 
         // Initialize the game
         function init() {
+            // Set up audio context
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                loadSounds();
+            } catch (e) {
+                console.log('Web Audio API not supported');
+                gameState.settings.soundEnabled = false;
+                soundToggle.textContent = '🔇';
+            }
+            
             // Check for saved game
             const savedGame = localStorage.getItem('dominoGameState');
             if (savedGame) {
@@ -392,6 +692,7 @@
             modeOptions.forEach(option => {
                 option.addEventListener('click', () => {
                     const mode = option.dataset.mode;
+                    playSound('click');
                     startNewGame(mode);
                 });
             });
@@ -402,6 +703,12 @@
             quitBtn.addEventListener('click', returnToMenu);
             playAgainBtn.addEventListener('click', playAgain);
             returnToMenuBtn.addEventListener('click', returnToMenu);
+            helpButton.addEventListener('click', showHelp);
+            closeModal.addEventListener('click', hideHelp);
+            soundToggle.addEventListener('click', toggleSound);
+            playerCountSelect.addEventListener('change', updateSettings);
+            botDifficultySelect.addEventListener('change', updateSettings);
+            pointsToWinSelect.addEventListener('change', updateSettings);
 
             // Listen for player clicks on dominoes
             playerHand.addEventListener('click', (e) => {
@@ -415,9 +722,11 @@
                 
                 // Check if domino can be played
                 if (canPlayDomino(domino)) {
+                    playSound('select');
                     playDomino(index);
                 } else {
                     // Show feedback that move is invalid
+                    playSound('error');
                     dominoEl.classList.add('selected');
                     setTimeout(() => {
                         dominoEl.classList.remove('selected');
@@ -443,34 +752,141 @@
                 const isLeft = boardIndex === 0;
                 placeDomino(index, isLeft);
             });
+
+            // Load settings
+            loadSettings();
+        }
+
+        // Load game settings
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('dominoGameSettings');
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                gameState.settings = {...gameState.settings, ...settings};
+                playerCountSelect.value = gameState.settings.playerCount;
+                botDifficultySelect.value = gameState.settings.botDifficulty;
+                pointsToWinSelect.value = gameState.targetScore;
+                soundToggle.textContent = gameState.settings.soundEnabled ? '🔊' : '🔇';
+            }
+        }
+
+        // Update settings
+        function updateSettings() {
+            gameState.settings.playerCount = parseInt(playerCountSelect.value);
+            gameState.settings.botDifficulty = botDifficultySelect.value;
+            gameState.targetScore = parseInt(pointsToWinSelect.value);
+            
+            localStorage.setItem('dominoGameSettings', JSON.stringify({
+                playerCount: gameState.settings.playerCount,
+                botDifficulty: gameState.settings.botDifficulty,
+                soundEnabled: gameState.settings.soundEnabled
+            }));
+        }
+
+        // Toggle sound
+        function toggleSound() {
+            gameState.settings.soundEnabled = !gameState.settings.soundEnabled;
+            soundToggle.textContent = gameState.settings.soundEnabled ? '🔊' : '🔇';
+            localStorage.setItem('dominoGameSettings', JSON.stringify({
+                ...gameState.settings,
+                soundEnabled: gameState.settings.soundEnabled
+            }));
+            
+            if (gameState.settings.soundEnabled) {
+                playSound('click');
+            }
+        }
+
+        // Show help modal
+        function showHelp() {
+            playSound('click');
+            helpModal.style.display = 'flex';
+        }
+
+        // Hide help modal
+        function hideHelp() {
+            playSound('click');
+            helpModal.style.display = 'none';
+        }
+
+        // Load sounds
+        function loadSounds() {
+            // Placeholder for actual sound implementation
+            // In a real implementation, you would load audio files here
+            sounds = {
+                click: { play: () => {} },
+                select: { play: () => {} },
+                place: { play: () => {} },
+                error: { play: () => {} },
+                win: { play: () => {} },
+                lose: { play: () => {} }
+            };
+        }
+
+        // Play sound
+        function playSound(type) {
+            if (!gameState.settings.soundEnabled) return;
+            
+            try {
+                if (sounds[type]) {
+                    sounds[type].play();
+                }
+            } catch (e) {
+                console.error('Error playing sound:', e);
+            }
         }
 
         // Start a new game
         function startNewGame(mode) {
             gameState = {
                 mode: mode,
-                players: [
-                    { id: 0, name: 'Player 1', dominoes: [], score: 0 },
-                    { id: 1, name: 'Computer', dominoes: [], score: 0 }
-                ],
+                players: [],
                 currentPlayer: 0,
                 board: [],
                 stock: [],
                 lastLeftValue: null,
                 lastRightValue: null,
                 gameOver: false,
-                winner: null
+                winner: null,
+                round: 1,
+                targetScore: gameState.targetScore,
+                settings: gameState.settings
             };
+
+            // Create players
+            const playerCount = gameState.settings.playerCount;
+            gameState.players.push({ 
+                id: 0, 
+                name: 'You', 
+                dominoes: [], 
+                score: 0, 
+                isHuman: true 
+            });
+            
+            for (let i = 1; i < playerCount; i++) {
+                gameState.players.push({ 
+                    id: i, 
+                    name: `Computer ${i}`, 
+                    dominoes: [], 
+                    score: 0, 
+                    isHuman: false 
+                });
+            }
 
             // Generate domino set
             const dominoSet = generateDominoSet();
             shuffleArray(dominoSet);
 
-            // Deal dominoes
-            const dominoesPerPlayer = 7;
-            gameState.players[0].dominoes = dominoSet.slice(0, dominoesPerPlayer);
-            gameState.players[1].dominoes = dominoSet.slice(dominoesPerPlayer, dominoesPerPlayer * 2);
-            gameState.stock = dominoSet.slice(dominoesPerPlayer * 2);
+            // Deal dominoes based on player count
+            const dominoesPerPlayer = playerCount === 2 ? 7 : playerCount === 3 ? 5 : 5;
+            
+            for (let i = 0; i < playerCount; i++) {
+                const start = i * dominoesPerPlayer;
+                const end = start + dominoesPerPlayer;
+                gameState.players[i].dominoes = dominoSet.slice(start, end);
+            }
+            
+            gameState.stock = dominoSet.slice(playerCount * dominoesPerPlayer);
 
             // Determine who starts (player with the highest double)
             let startingPlayer = 0;
@@ -501,7 +917,7 @@
             }
 
             gameState.currentPlayer = startingPlayer;
-            isCurrentPlayer = startingPlayer === 0;
+            isCurrentPlayer = gameState.players[startingPlayer].isHuman;
 
             // Show game screen
             modeSelectionScreen.style.display = 'none';
@@ -522,7 +938,7 @@
             const savedGame = JSON.parse(localStorage.getItem('dominoGameState'));
             if (savedGame) {
                 gameState = savedGame;
-                isCurrentPlayer = gameState.currentPlayer === 0;
+                isCurrentPlayer = gameState.players[gameState.currentPlayer].isHuman;
                 
                 // Show game screen
                 modeSelectionScreen.style.display = 'none';
@@ -542,18 +958,23 @@
         // Save game
         function saveGame() {
             localStorage.setItem('dominoGameState', JSON.stringify(gameState));
+            playSound('click');
             alert('Game saved! You can continue later.');
         }
 
         // Update game UI
         function updateGameUI() {
+            // Update scoreboard
+            updateScoreboard();
+            
             // Update game status
-            if (isCurrentPlayer) {
+            const currentPlayer = gameState.players[gameState.currentPlayer];
+            if (currentPlayer.isHuman) {
                 gameStatus.textContent = 'Your turn!';
-                gameStatus.style.color = '#4CAF50';
+                gameStatus.style.color = '#2ecc71';
             } else {
-                gameStatus.textContent = "Computer's turn";
-                gameStatus.style.color = '#333';
+                gameStatus.textContent = `${currentPlayer.name}'s turn`;
+                gameStatus.style.color = '#ecf0f1';
             }
             
             // Update board
@@ -568,6 +989,21 @@
             passBtn.disabled = !isCurrentPlayer || !canPass();
         }
 
+        // Update scoreboard
+        function updateScoreboard() {
+            scoreboard.innerHTML = '';
+            
+            gameState.players.forEach((player, index) => {
+                const playerScore = document.createElement('div');
+                playerScore.className = `player-score ${index === gameState.currentPlayer ? 'active' : ''}`;
+                playerScore.innerHTML = `
+                    <div>${player.name}</div>
+                    <div>${player.score} pts</div>
+                `;
+                scoreboard.appendChild(playerScore);
+            });
+        }
+
         // Update the board display
         function updateBoard(board) {
             dominoChain.innerHTML = '';
@@ -580,6 +1016,7 @@
             
             board.forEach((domino, index) => {
                 const dominoEl = createDominoElement(domino, index);
+                dominoEl.dataset.boardIndex = index;
                 dominoChain.appendChild(dominoEl);
             });
         }
@@ -608,33 +1045,97 @@
                 dominoEl.classList.add('horizontal');
             }
             
-            // Add pips
-            const leftValue = domino[0];
-            const rightValue = domino[1];
-            
-            const leftPips = document.createElement('div');
-            leftPips.className = `pip-side pip-${leftValue}`;
-            
-            const rightPips = document.createElement('div');
-            rightPips.className = `pip-side pip-${rightValue}`;
-            
-            // Add pips based on value
-            for (let i = 0; i < leftValue; i++) {
-                const pip = document.createElement('div');
-                pip.className = 'pip';
-                leftPips.appendChild(pip);
+            if (domino[0] === domino[1]) {
+                dominoEl.classList.add('double');
             }
             
-            for (let i = 0; i < rightValue; i++) {
-                const pip = document.createElement('div');
-                pip.className = 'pip';
-                rightPips.appendChild(pip);
-            }
+            // Create left half
+            const leftHalf = document.createElement('div');
+            leftHalf.className = 'half';
+            createPips(leftHalf, domino[0]);
             
-            dominoEl.appendChild(leftPips);
-            dominoEl.appendChild(rightPips);
+            // Create divider
+            const divider = document.createElement('div');
+            divider.className = 'divider';
+            
+            // Create right half
+            const rightHalf = document.createElement('div');
+            rightHalf.className = 'half';
+            createPips(rightHalf, domino[1]);
+            
+            dominoEl.appendChild(leftHalf);
+            dominoEl.appendChild(divider);
+            dominoEl.appendChild(rightHalf);
             
             return dominoEl;
+        }
+
+        // Create pips for a domino half
+        function createPips(container, value) {
+            if (value === 0) return;
+            
+            // Create appropriate pip configuration based on value
+            switch(value) {
+                case 1:
+                    container.innerHTML = '<div class="pip"></div>';
+                    break;
+                case 2:
+                    container.innerHTML = `
+                        <div style="align-self: flex-start;" class="pip"></div>
+                        <div style="align-self: flex-end;" class="pip"></div>
+                    `;
+                    break;
+                case 3:
+                    container.innerHTML = `
+                        <div style="align-self: flex-start;" class="pip"></div>
+                        <div style="align-self: center;" class="pip"></div>
+                        <div style="align-self: flex-end;" class="pip"></div>
+                    `;
+                    break;
+                case 4:
+                    container.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; width: 100%;">
+                            <div class="pip"></div>
+                            <div class="pip"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; width: 100%;">
+                            <div class="pip"></div>
+                            <div class="pip"></div>
+                        </div>
+                    `;
+                    break;
+                case 5:
+                    container.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; width: 100%;">
+                            <div class="pip"></div>
+                            <div class="pip"></div>
+                        </div>
+                        <div style="display: flex; justify-content: center; width: 100%;">
+                            <div class="pip"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; width: 100%;">
+                            <div class="pip"></div>
+                            <div class="pip"></div>
+                        </div>
+                    `;
+                    break;
+                case 6:
+                    container.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; width: 100%;">
+                            <div class="pip"></div>
+                            <div class="pip"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; width: 100%;">
+                            <div class="pip"></div>
+                            <div class="pip"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; width: 100%;">
+                            <div class="pip"></div>
+                            <div class="pip"></div>
+                        </div>
+                    `;
+                    break;
+            }
         }
 
         // Check if a domino can be played
@@ -737,20 +1238,24 @@
             
             // Update game state
             gameState.board = newBoard;
-            gameState.currentPlayer = 1; // Switch to computer
+            gameState.currentPlayer = (gameState.currentPlayer + 1) % gameState.players.length;
+            isCurrentPlayer = gameState.players[gameState.currentPlayer].isHuman;
             
             // Update UI
             updateGameUI();
+            playSound('place');
             
-            // Computer's turn
-            setTimeout(computerMove, 1000);
+            // Computer's turn if needed
+            if (!isCurrentPlayer) {
+                setTimeout(computerMove, 1000);
+            }
         }
 
         // Computer makes a move
         function computerMove() {
             if (gameState.gameOver) return;
             
-            const computer = gameState.players[1];
+            const computer = gameState.players[gameState.currentPlayer];
             let played = false;
             
             // Try to play a domino
@@ -795,7 +1300,7 @@
                     
                     // Check for game over
                     if (computer.dominoes.length === 0) {
-                        endGame(1);
+                        endGame(gameState.currentPlayer);
                         return;
                     }
                     
@@ -847,7 +1352,7 @@
                             
                             // Check for game over
                             if (computer.dominoes.length === 0) {
-                                endGame(1);
+                                endGame(gameState.currentPlayer);
                                 return;
                             }
                             
@@ -863,12 +1368,17 @@
                 }
             }
             
-            // Switch back to player
-            gameState.currentPlayer = 0;
-            isCurrentPlayer = true;
+            // Switch to next player
+            gameState.currentPlayer = (gameState.currentPlayer + 1) % gameState.players.length;
+            isCurrentPlayer = gameState.players[gameState.currentPlayer].isHuman;
             
             // Update UI
             updateGameUI();
+            
+            // If next is computer, make another move
+            if (!isCurrentPlayer && !gameState.gameOver) {
+                setTimeout(computerMove, 1000);
+            }
         }
 
         // Draw a domino from the stock
@@ -879,6 +1389,8 @@
             const drawnDomino = gameState.stock.pop();
             gameState.players[0].dominoes.push(drawnDomino);
             
+            playSound('click');
+            
             // Update UI
             updateGameUI();
         }
@@ -887,15 +1399,19 @@
         function passTurn() {
             if (!canPass()) return;
             
-            // Switch to computer
-            gameState.currentPlayer = 1;
-            isCurrentPlayer = false;
+            // Switch to next player
+            gameState.currentPlayer = (gameState.currentPlayer + 1) % gameState.players.length;
+            isCurrentPlayer = gameState.players[gameState.currentPlayer].isHuman;
+            
+            playSound('click');
             
             // Update UI
             updateGameUI();
             
             // Computer's turn
-            setTimeout(computerMove, 1000);
+            if (!isCurrentPlayer) {
+                setTimeout(computerMove, 1000);
+            }
         }
 
         // Check if player can pass
@@ -909,13 +1425,22 @@
 
         // End the game
         function endGame(winnerId) {
-            // Calculate scores
-            const winner = gameState.players[winnerId];
-            const loser = gameState.players[winnerId === 0 ? 1 : 0];
+            // Calculate scores based on game mode
+            let points = 0;
             
-            // Winner gets points equal to sum of loser's dominoes
-            const points = sumDominoes(loser.dominoes);
-            winner.score += points;
+            if (gameState.mode === 'allfives') {
+                // In All Fives, winner gets points from this round
+                points = calculateAllFivesScore();
+            } else {
+                // In other modes, winner gets points equal to sum of opponents' dominoes
+                gameState.players.forEach((player, index) => {
+                    if (index !== winnerId) {
+                        points += sumDominoes(player.dominoes);
+                    }
+                });
+            }
+            
+            gameState.players[winnerId].score += points;
             
             gameState.gameOver = true;
             gameState.winner = winnerId;
@@ -925,17 +1450,25 @@
             gameOverScreen.style.display = 'block';
             
             // Update winner message
-            if (winnerId === 0) {
-                winnerMessage.textContent = `You win with ${points} points!`;
+            const winner = gameState.players[winnerId];
+            if (winner.isHuman) {
+                winnerMessage.textContent = `You win this round with ${points} points!`;
+                playSound('win');
             } else {
-                winnerMessage.textContent = `Computer wins with ${points} points!`;
+                winnerMessage.textContent = `${winner.name} wins this round with ${points} points!`;
+                playSound('lose');
+            }
+            
+            // Check if game target score reached
+            if (winner.score >= gameState.targetScore) {
+                winnerMessage.textContent += `\n\n${winner.isHuman ? 'You' : winner.name} won the game with ${winner.score} points!`;
             }
             
             // Update scores list
             scoresList.innerHTML = '';
             gameState.players.forEach(player => {
                 const scoreEl = document.createElement('div');
-                scoreEl.className = 'player-score';
+                scoreEl.className = `player-result ${player.id === winnerId ? 'winner' : ''}`;
                 scoreEl.innerHTML = `
                     <span>${player.name}</span>
                     <span>${player.score} points</span>
@@ -947,13 +1480,33 @@
             localStorage.removeItem('dominoGameState');
         }
 
+        // Calculate All Fives score
+        function calculateAllFivesScore() {
+            if (gameState.board.length === 0) return 0;
+            
+            const sum = gameState.lastLeftValue + gameState.lastRightValue;
+            return sum % 5 === 0 ? sum : 0;
+        }
+
         // Play again
         function playAgain() {
-            startNewGame(gameState.mode);
+            playSound('click');
+            
+            // Check if game target score reached
+            const winner = gameState.players[gameState.winner];
+            if (winner.score >= gameState.targetScore) {
+                // Start a completely new game
+                startNewGame(gameState.mode);
+            } else {
+                // Start a new round
+                gameState.round++;
+                startNewGame(gameState.mode);
+            }
         }
 
         // Return to menu
         function returnToMenu() {
+            playSound('click');
             if (confirm('Are you sure you want to quit? Your current game will be lost.')) {
                 localStorage.removeItem('dominoGameState');
                 
