@@ -1,236 +1,1531 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>القرآن الكريم - Quran Mobile</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root {
-            --primary: #2c5f2d;
-            --gold: #d4af37;
-            --bg: #f8f5f0;
-            --text: #2d3436;
-            --sidebar-width: 250px;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dominoes — Classic Table Game</title>
+<style>
+/* =============================================
+   RESET & ROOT VARIABLES
+   ============================================= */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Amiri Quran', 'Traditional Arabic', serif;
-            touch-action: manipulation;
-        }
+:root {
+  --green-felt: #1a6b3c;
+  --green-felt-dark: #124d2c;
+  --green-felt-light: #228b4e;
+  --gold: #c9a84c;
+  --gold-light: #e8c96d;
+  --ivory: #f5f0e8;
+  --domino-bg: #f8f4ed;
+  --domino-border: #d4c9b0;
+  --domino-dot: #1a1a1a;
+  --domino-divider: #8b7355;
+  --highlight: #ffdd44;
+  --highlight-shadow: rgba(255,221,68,0.6);
+  --invalid: #cc3333;
+  --ui-bg: rgba(0,0,0,0.5);
+  --ui-bg-light: rgba(0,0,0,0.35);
+  --text-light: #f0ead8;
+  --text-gold: #e8c96d;
+  --shadow-tile: 2px 4px 12px rgba(0,0,0,0.4);
+  --radius: 8px;
+  --font-main: 'Georgia', serif;
+  --font-ui: 'Trebuchet MS', 'Verdana', sans-serif;
+  --anim-fast: 0.18s;
+  --anim-med: 0.35s;
+}
 
-        body {
-            background: var(--bg);
-            color: var(--text);
-            transition: background 0.3s, color 0.3s;
-        }
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  font-family: var(--font-ui);
+  background: var(--green-felt-dark);
+  color: var(--text-light);
+  user-select: none;
+}
 
-        body.night-mode {
-            --bg: #1a1a1a;
-            --text: #ffffff;
-            --primary: #3a7d3f;
-        }
+/* =============================================
+   SCREENS
+   ============================================= */
+.screen {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity 0.4s, visibility 0.4s;
+}
+.screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
 
-        /* Sidebar */
-        .sidebar {
-            position: fixed;
-            left: -250px;
-            top: 0;
-            width: var(--sidebar-width);
-            height: 100%;
-            background: white;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            transition: left 0.3s;
-            z-index: 1000;
-        }
+/* =============================================
+   START MENU
+   ============================================= */
+#start-screen {
+  background: radial-gradient(ellipse at center, #1d7a45 0%, #0f4a27 60%, #081f11 100%);
+  flex-direction: column;
+  gap: 28px;
+  z-index: 100;
+}
 
-        .sidebar.active {
-            left: 0;
-        }
+.menu-logo {
+  text-align: center;
+  margin-bottom: 8px;
+}
+.menu-logo h1 {
+  font-family: var(--font-main);
+  font-size: clamp(2.4rem, 6vw, 4rem);
+  letter-spacing: 0.08em;
+  color: var(--gold-light);
+  text-shadow: 0 2px 20px rgba(201,168,76,0.6), 0 4px 40px rgba(0,0,0,0.8);
+  line-height: 1.1;
+}
+.menu-logo .subtitle {
+  font-size: clamp(0.75rem, 2vw, 1rem);
+  letter-spacing: 0.25em;
+  color: rgba(232,201,109,0.6);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
 
-        .sidebar-header {
-            padding: 1rem;
-            background: var(--primary);
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+/* Decorative domino row in menu */
+.deco-dominoes {
+  display: flex; gap: 6px; justify-content: center;
+  margin: 4px 0;
+}
+.deco-dom {
+  width: 28px; height: 54px;
+  background: var(--domino-bg);
+  border: 2px solid var(--domino-border);
+  border-radius: 5px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.5);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 2px;
+  font-size: 7px;
+}
 
-        .sidebar-item {
-            padding: 1rem;
-            border-bottom: 1px solid #eee;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
+.menu-panel {
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 16px;
+  padding: 28px 36px;
+  backdrop-filter: blur(8px);
+  width: min(380px, 90vw);
+  display: flex; flex-direction: column; gap: 14px;
+}
 
-        .sidebar-item:hover {
-            background: #f5f5f5;
-        }
+.menu-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-gold);
+  margin-bottom: 2px;
+}
 
-        /* Menu Toggle */
-        .menu-toggle {
-            position: fixed;
-            left: 1rem;
-            top: 1rem;
-            font-size: 1.5rem;
-            color: var(--primary);
-            cursor: pointer;
-            z-index: 500;
-        }
+.mode-btn {
+  width: 100%;
+  padding: 13px 18px;
+  background: linear-gradient(135deg, rgba(40,100,65,0.8), rgba(20,60,40,0.9));
+  border: 1px solid rgba(201,168,76,0.4);
+  border-radius: 10px;
+  color: var(--text-light);
+  font-size: 0.95rem;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  transition: all var(--anim-fast);
+  text-align: left;
+  display: flex; align-items: center; gap: 12px;
+  letter-spacing: 0.03em;
+}
+.mode-btn:hover {
+  background: linear-gradient(135deg, rgba(60,140,90,0.85), rgba(30,90,55,0.95));
+  border-color: var(--gold);
+  transform: translateX(4px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+.mode-btn .mode-icon { font-size: 1.4rem; }
+.mode-btn .mode-info { display: flex; flex-direction: column; }
+.mode-btn .mode-title { font-weight: 600; color: var(--gold-light); }
+.mode-btn .mode-desc { font-size: 0.78rem; color: rgba(200,200,180,0.8); margin-top: 1px; }
 
-        /* Language Switcher */
-        .lang-switcher {
-            position: fixed;
-            right: 1rem;
-            top: 1rem;
-            background: var(--primary);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            cursor: pointer;
-            z-index: 500;
-        }
+/* =============================================
+   GAME SCREEN
+   ============================================= */
+#game-screen {
+  flex-direction: column;
+  background: radial-gradient(ellipse at center, var(--green-felt) 0%, var(--green-felt-dark) 70%, #0b2e18 100%);
+  overflow: hidden;
+}
 
-        /* Main Content */
-        .main-content {
-            padding: 1rem;
-            padding-top: 4rem;
-            transition: margin 0.3s;
-        }
+/* ── Top HUD ─────────────────────────────── */
+#hud {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 52px;
+  background: rgba(0,0,0,0.6);
+  border-bottom: 1px solid rgba(201,168,76,0.25);
+  display: flex; align-items: center; padding: 0 14px;
+  gap: 12px; z-index: 50;
+  backdrop-filter: blur(6px);
+}
+#hud-title {
+  font-family: var(--font-main);
+  font-size: 1.1rem;
+  color: var(--gold-light);
+  letter-spacing: 0.06em;
+  margin-right: 8px;
+}
+.hud-scores {
+  display: flex; gap: 8px; flex: 1;
+  overflow-x: auto;
+}
+.score-chip {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  transition: all var(--anim-fast);
+}
+.score-chip.active {
+  background: rgba(201,168,76,0.2);
+  border-color: var(--gold);
+  color: var(--gold-light);
+  box-shadow: 0 0 10px rgba(201,168,76,0.3);
+}
+.score-chip .chip-name { font-weight: 600; }
+.score-chip .chip-score {
+  background: rgba(0,0,0,0.3);
+  border-radius: 10px;
+  padding: 1px 7px;
+  font-size: 0.72rem;
+  color: var(--gold-light);
+}
+.score-chip .chip-tiles {
+  font-size: 0.68rem;
+  color: rgba(200,200,180,0.7);
+}
 
-        .surah-card {
-            background: white;
-            border-radius: 15px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            animation: slideUp 0.5s ease;
-        }
+#btn-restart {
+  background: rgba(180,50,50,0.7);
+  border: 1px solid rgba(255,100,100,0.4);
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all var(--anim-fast);
+  white-space: nowrap;
+  font-family: var(--font-ui);
+}
+#btn-restart:hover {
+  background: rgba(200,70,70,0.85);
+  box-shadow: 0 2px 10px rgba(200,50,50,0.4);
+}
 
-        @keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-    </style>
+/* ── Main table area ───────────────────────── */
+#table-area {
+  position: fixed;
+  top: 52px; left: 0; right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+/* ── Bot zones ─────────────────────────────── */
+.bot-zone {
+  position: absolute;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column;
+  gap: 6px;
+}
+.bot-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  color: rgba(230,210,160,0.8);
+  text-transform: uppercase;
+}
+.bot-hand {
+  display: flex; gap: 3px;
+  flex-wrap: wrap; justify-content: center;
+}
+.bot-tile-back {
+  width: 18px; height: 34px;
+  background: linear-gradient(135deg, #2d5a3d, #1a3d28);
+  border: 1px solid rgba(201,168,76,0.4);
+  border-radius: 4px;
+  box-shadow: 1px 2px 6px rgba(0,0,0,0.5);
+}
+
+/* Positions for bots */
+#bot-top {
+  top: 6px; left: 50%; transform: translateX(-50%);
+  flex-direction: column;
+}
+#bot-left {
+  left: 6px; top: 50%; transform: translateY(-50%);
+  flex-direction: column;
+}
+#bot-right {
+  right: 6px; top: 50%; transform: translateY(-50%);
+  flex-direction: column;
+}
+#bot-extra {
+  top: 6px; left: 25%; transform: translateX(-50%);
+  flex-direction: column;
+}
+
+/* ── Board (scrollable canvas for tiles) ────── */
+#board-wrapper {
+  position: absolute;
+  top: 80px; left: 0; right: 0;
+  bottom: 170px;
+  overflow: auto;
+}
+#board {
+  position: relative;
+  min-width: 2000px; min-height: 1200px;
+  /* center of board */
+}
+
+/* ── Boneyard ──────────────────────────────── */
+#boneyard-area {
+  position: absolute;
+  right: 14px; top: 10px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 4px;
+  z-index: 10;
+}
+#boneyard-pile {
+  position: relative; width: 44px; height: 80px; cursor: pointer;
+}
+#boneyard-pile .pile-card {
+  position: absolute;
+  width: 44px; height: 80px;
+  background: linear-gradient(135deg, #2d5a3d, #1a3d28);
+  border: 1.5px solid rgba(201,168,76,0.5);
+  border-radius: 7px;
+  box-shadow: 1px 2px 8px rgba(0,0,0,0.5);
+  transition: transform var(--anim-fast);
+}
+#boneyard-pile:hover .pile-card { transform: translateY(-3px); }
+#boneyard-count {
+  font-size: 0.72rem;
+  color: var(--text-gold);
+  background: rgba(0,0,0,0.5);
+  border-radius: 10px;
+  padding: 2px 8px;
+}
+#boneyard-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(200,180,120,0.6);
+}
+
+/* ── Player hand ──────────────────────────── */
+#player-hand-wrapper {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 160px;
+  background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.45) 80%, transparent 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  padding-bottom: 14px;
+  z-index: 30;
+}
+#player-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(200,200,180,0.7);
+  margin-bottom: 8px;
+}
+#player-hand {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 0 14px 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201,168,76,0.4) transparent;
+  max-width: 100%;
+}
+#player-hand::-webkit-scrollbar { height: 4px; }
+#player-hand::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.4); border-radius: 2px; }
+
+/* ── Status bar ───────────────────────────── */
+#status-bar {
+  position: fixed;
+  bottom: 160px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.65);
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 20px;
+  padding: 6px 18px;
+  font-size: 0.8rem;
+  color: var(--text-gold);
+  white-space: nowrap;
+  z-index: 40;
+  max-width: 90vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  backdrop-filter: blur(4px);
+  transition: opacity var(--anim-med);
+}
+
+/* =============================================
+   DOMINO TILE COMPONENT
+   ============================================= */
+.tile {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--domino-bg);
+  border: 2px solid var(--domino-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-tile);
+  cursor: default;
+  transition: transform var(--anim-fast), box-shadow var(--anim-fast), border-color var(--anim-fast);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* Vertical tile (default) */
+.tile.v {
+  width: 44px; height: 84px;
+  padding: 5px 0;
+}
+/* Horizontal tile */
+.tile.h {
+  width: 84px; height: 44px;
+  flex-direction: row;
+  padding: 0 5px;
+}
+
+/* Half of the tile */
+.tile-half {
+  display: flex; align-items: center; justify-content: center;
+  flex: 1; width: 100%;
+}
+.tile.h .tile-half { flex-direction: row; width: auto; height: 100%; }
+
+/* Divider */
+.tile-divider {
+  background: var(--domino-divider);
+}
+.tile.v .tile-divider { width: 80%; height: 1.5px; margin: 0 auto; }
+.tile.h .tile-divider { height: 80%; width: 1.5px; margin: auto 0; }
+
+/* Dots grid */
+.dots {
+  display: grid;
+  width: 100%; height: 100%;
+  place-items: center;
+}
+.dots-1 { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+.dots-2 { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+.dots-3 { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr 1fr; }
+.dots-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.dots-5 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; }
+.dots-6 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; }
+
+.dot {
+  width: 7px; height: 7px;
+  background: var(--domino-dot);
+  border-radius: 50%;
+}
+/* Hide placeholder cells */
+.dot.empty { background: transparent; }
+
+/* Playable highlight */
+.tile.playable {
+  border-color: var(--highlight);
+  box-shadow: 0 0 0 2px var(--highlight-shadow), var(--shadow-tile);
+  cursor: pointer;
+}
+.tile.playable:hover {
+  transform: translateY(-6px) scale(1.06);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 0 3px var(--highlight-shadow);
+  z-index: 5;
+}
+
+/* Selected tile */
+.tile.selected {
+  border-color: #44aaff;
+  box-shadow: 0 0 0 3px rgba(68,170,255,0.5), var(--shadow-tile);
+  transform: translateY(-8px);
+}
+
+/* Board tiles */
+.board-tile {
+  position: absolute;
+  animation: tilePlace 0.28s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes tilePlace {
+  from { opacity: 0; transform: scale(0.6) rotate(-5deg); }
+  to   { opacity: 1; transform: scale(1)   rotate(0deg); }
+}
+
+/* =============================================
+   GAME OVER OVERLAY
+   ============================================= */
+#gameover-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200;
+  backdrop-filter: blur(4px);
+}
+#gameover-overlay.hidden { display: none; }
+
+#gameover-card {
+  background: linear-gradient(135deg, #1a4a28, #0f2d18);
+  border: 2px solid var(--gold);
+  border-radius: 18px;
+  padding: 36px 44px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+  max-width: 380px; width: 90vw;
+  animation: cardIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: scale(0.75); }
+  to   { opacity: 1; transform: scale(1); }
+}
+#gameover-title {
+  font-family: var(--font-main);
+  font-size: 2rem;
+  color: var(--gold-light);
+  margin-bottom: 8px;
+}
+#gameover-msg {
+  color: rgba(220,210,180,0.9);
+  margin-bottom: 18px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+#gameover-scores {
+  background: rgba(0,0,0,0.4);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+.go-score-row {
+  display: flex; justify-content: space-between;
+  padding: 3px 0;
+  font-size: 0.85rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.go-score-row:last-child { border-bottom: none; }
+.go-score-row.winner { color: var(--gold-light); font-weight: 700; }
+.gameover-btn {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #c9a84c, #a87c2a);
+  border: none; border-radius: 10px;
+  color: #1a1a1a;
+  font-family: var(--font-ui);
+  font-size: 1rem; font-weight: 700;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: all var(--anim-fast);
+  letter-spacing: 0.05em;
+}
+.gameover-btn:hover {
+  background: linear-gradient(135deg, #e8c96d, #c9a84c);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+
+/* =============================================
+   TURN INDICATOR ANIMATION
+   ============================================= */
+#turn-indicator {
+  position: fixed;
+  top: 62px; left: 50%; transform: translateX(-50%);
+  background: rgba(201,168,76,0.2);
+  border: 1px solid var(--gold);
+  border-radius: 20px;
+  padding: 5px 16px;
+  font-size: 0.75rem;
+  color: var(--gold-light);
+  letter-spacing: 0.1em;
+  z-index: 45;
+  animation: turnPulse 2s ease infinite;
+  transition: opacity var(--anim-med);
+}
+#turn-indicator.hidden { opacity: 0; }
+@keyframes turnPulse {
+  0%,100% { box-shadow: 0 0 6px rgba(201,168,76,0.2); }
+  50%      { box-shadow: 0 0 16px rgba(201,168,76,0.6); }
+}
+
+/* =============================================
+   DRAW ANIMATION
+   ============================================= */
+.draw-flash {
+  animation: drawPop 0.4s ease;
+}
+@keyframes drawPop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+/* =============================================
+   RESPONSIVE
+   ============================================= */
+@media (max-width: 600px) {
+  #hud-title { display: none; }
+  .score-chip { font-size: 0.7rem; padding: 3px 7px; }
+  .tile.v { width: 36px; height: 70px; }
+  .tile.h { width: 70px; height: 36px; }
+  .dot { width: 5.5px; height: 5.5px; }
+  #player-hand-wrapper { height: 140px; }
+  #board-wrapper { bottom: 148px; }
+}
+
+/* =============================================
+   UTILITY
+   ============================================= */
+.hidden { display: none !important; }
+</style>
 </head>
 <body>
-    <!-- Menu Toggle -->
-    <div class="menu-toggle" onclick="toggleSidebar()">
-        <i class="fas fa-bars"></i>
+
+<!-- ══════════════════════════════════════
+     START SCREEN
+══════════════════════════════════════ -->
+<div id="start-screen" class="screen">
+  <div class="menu-logo">
+    <h1>DOMINOES</h1>
+    <p class="subtitle">Classic Double-Six Table Game</p>
+  </div>
+  <div class="deco-dominoes" id="deco-row"></div>
+  <div class="menu-panel">
+    <div class="menu-label">Choose Game Mode</div>
+    <button class="mode-btn" onclick="startGame(1)">
+      <span class="mode-icon">🧑‍💻</span>
+      <span class="mode-info">
+        <span class="mode-title">1 vs 1  —  Duel</span>
+        <span class="mode-desc">You against one bot · Draw game rules</span>
+      </span>
+    </button>
+    <button class="mode-btn" onclick="startGame(2)">
+      <span class="mode-icon">🤖🤖</span>
+      <span class="mode-info">
+        <span class="mode-title">1 vs 2  —  Triad</span>
+        <span class="mode-desc">You against two bots</span>
+      </span>
+    </button>
+    <button class="mode-btn" onclick="startGame(3)">
+      <span class="mode-icon">🤖🤖🤖</span>
+      <span class="mode-info">
+        <span class="mode-title">1 vs 3  —  Classic Four</span>
+        <span class="mode-desc">Most popular format — four players</span>
+      </span>
+    </button>
+    <button class="mode-btn" onclick="startGame(4)">
+      <span class="mode-icon">🤖🤖🤖🤖</span>
+      <span class="mode-info">
+        <span class="mode-title">1 vs 4  —  Big Table</span>
+        <span class="mode-desc">You against four bots</span>
+      </span>
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     GAME SCREEN
+══════════════════════════════════════ -->
+<div id="game-screen" class="screen hidden">
+
+  <!-- HUD -->
+  <div id="hud">
+    <div id="hud-title">♟ Dominoes</div>
+    <div class="hud-scores" id="hud-scores"></div>
+    <button id="btn-restart" onclick="showStartMenu()">↩ Menu</button>
+  </div>
+
+  <!-- Turn indicator -->
+  <div id="turn-indicator">YOUR TURN</div>
+
+  <!-- Table area -->
+  <div id="table-area">
+
+    <!-- Bot zones — populated dynamically -->
+    <div id="bot-top"   class="bot-zone" style="display:none"></div>
+    <div id="bot-left"  class="bot-zone" style="display:none"></div>
+    <div id="bot-right" class="bot-zone" style="display:none"></div>
+    <div id="bot-extra" class="bot-zone" style="display:none"></div>
+
+    <!-- Board -->
+    <div id="board-wrapper">
+      <div id="board"></div>
     </div>
 
-    <!-- Language Switcher -->
-    <div class="lang-switcher" onclick="toggleLanguage()" data-i18n="language">English</div>
-
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <h2 data-i18n="menu">القائمة</h2>
-            <i class="fas fa-times" onclick="toggleSidebar()"></i>
-        </div>
-        <div class="sidebar-item" onclick="showSection('surah')" data-i18n="surahs">السور</div>
-        <div class="sidebar-item" onclick="showSection('bookmarks')" data-i18n="bookmarks">المفضلة</div>
-        <div class="sidebar-item" onclick="toggleNightMode()" data-i18n="night_mode">الوضع الليلي</div>
+    <!-- Boneyard -->
+    <div id="boneyard-area">
+      <div id="boneyard-pile" onclick="playerDraw()" title="Draw from boneyard">
+        <div class="pile-card" style="top:6px;left:3px;transform:rotate(3deg)"></div>
+        <div class="pile-card" style="top:3px;left:1px;transform:rotate(-2deg)"></div>
+        <div class="pile-card" style="top:0;left:0;"></div>
+      </div>
+      <div id="boneyard-count">28</div>
+      <div id="boneyard-label">Boneyard</div>
     </div>
 
-    <!-- Main Content -->
-    <div class="main-content" id="mainContent">
-        <div id="surahList">
-            <!-- Surah cards will be loaded here -->
-        </div>
-    </div>
+  </div>
 
-    <script>
-        // API Configuration
-        const API_BASE = 'https://api.alquran.cloud/v1';
-        let currentLanguage = 'ar';
+  <!-- Status -->
+  <div id="status-bar">Setting up game…</div>
 
-        // Language Translations
-        const translations = {
-            en: {
-                menu: "Menu",
-                surahs: "Surahs",
-                bookmarks: "Bookmarks",
-                night_mode: "Night Mode",
-                language: "English"
-            },
-            fr: {
-                menu: "Menu",
-                surahs: "Sourates",
-                bookmarks: "Favoris",
-                night_mode: "Mode Nuit",
-                language: "Français"
-            }
-        };
+  <!-- Player hand -->
+  <div id="player-hand-wrapper">
+    <div id="player-label">YOUR HAND</div>
+    <div id="player-hand"></div>
+  </div>
 
-        // Toggle Sidebar
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('active');
-        }
+</div>
 
-        // Night Mode Toggle
-        function toggleNightMode() {
-            document.body.classList.toggle('night-mode');
-            localStorage.setItem('nightMode', document.body.classList.contains('night-mode'));
-        }
+<!-- Game Over Overlay -->
+<div id="gameover-overlay" class="hidden">
+  <div id="gameover-card">
+    <div id="gameover-title">DOMINO!</div>
+    <div id="gameover-msg"></div>
+    <div id="gameover-scores"></div>
+    <button class="gameover-btn" onclick="showStartMenu()">Play Again</button>
+  </div>
+</div>
 
-        // Language Toggle
-        function toggleLanguage() {
-            currentLanguage = currentLanguage === 'en' ? 'fr' : 'en';
-            updateLanguage();
-        }
+<script>
+/* ================================================================
+   DOMINO GAME ENGINE
+   Rules: Draw game (standard double-six)
+   - 28 tiles, player draws 7 each (or 5 for 4-5 players)
+   - Player with highest double starts
+   - Must match open ends; draw from boneyard if can't play
+   - Score: sum of opponents' remaining pips (rounded to nearest 5)
+   - Game ends at 100+ points or player empties hand
+   ================================================================ */
 
-        // Update Language
-        function updateLanguage() {
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                el.textContent = translations[currentLanguage][key];
-            });
-        }
+// ── Global state ──────────────────────────────────────────────
+let G = {}; // game state
 
-        // Load Surahs
-        async function loadSurahs() {
-            try {
-                const response = await fetch(`${API_BASE}/surah`);
-                const data = await response.json();
-                renderSurahs(data.data);
-            } catch (error) {
-                console.error('Error loading surahs:', error);
-            }
-        }
+// ── Constants ─────────────────────────────────────────────────
+const BOARD_CX = 1000; // virtual board center x
+const BOARD_CY = 600;  // virtual board center y
+const TILE_W = 44;     // vertical tile width
+const TILE_H = 84;     // vertical tile height
+const SCORE_LIMIT = 100;
 
-        // Render Surahs
-        function renderSurahs(surahs) {
-            const container = document.getElementById('surahList');
-            container.innerHTML = surahs.map(surah => `
-                <div class="surah-card" onclick="loadSurah(${surah.number})">
-                    <div style="display: flex; align-items: center; gap: 1rem;">
-                        <div style="background: var(--primary); color: white; 
-                             width: 40px; height: 40px; border-radius: 50%; 
-                             display: flex; align-items: center; justify-content: center;">
-                            ${surah.number}
-                        </div>
-                        <div>
-                            <h3 style="color: var(--primary);">${surah.name}</h3>
-                            <p>${surah.englishName} (${surah.englishNameTranslation})</p>
-                            <p>آيات: ${surah.numberOfAyahs}</p>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
+const BOT_NAMES = ["Bot Alpha", "Bot Beta", "Bot Gamma", "Bot Delta"];
+const BOT_ZONES = ["bot-top", "bot-left", "bot-right", "bot-extra"];
 
-        // Initial Load
-        loadSurahs();
+// ── Generate full double-six set ──────────────────────────────
+function generateSet() {
+  const tiles = [];
+  for (let a = 0; a <= 6; a++) {
+    for (let b = a; b <= 6; b++) {
+      tiles.push({ a, b, id: `${a}-${b}-${Math.random()}` });
+    }
+  }
+  return tiles;
+}
 
-        // Restore Night Mode
-        if(localStorage.getItem('nightMode') === 'true') {
-            document.body.classList.add('night-mode');
-        }
-    </script>
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ── Initialize game ───────────────────────────────────────────
+function initGame(numBots) {
+  const tiles = shuffle(generateSet());
+  const totalPlayers = 1 + numBots; // player + bots
+  // Standard deal: 7 tiles for 2-3 players, 5 for 4-5
+  const handSize = totalPlayers <= 3 ? 7 : 5;
+
+  const players = [];
+  // Player 0 = human, 1..n = bots
+  for (let i = 0; i < totalPlayers; i++) {
+    players.push({
+      id: i,
+      name: i === 0 ? "You" : BOT_NAMES[i - 1],
+      isBot: i !== 0,
+      hand: tiles.splice(0, handSize),
+      score: 0,
+      passed: false,
+    });
+  }
+
+  // Find who has the highest double to start
+  let startPlayer = -1, highestDouble = -1;
+  for (const p of players) {
+    for (const t of p.hand) {
+      if (t.a === t.b && t.a > highestDouble) {
+        highestDouble = t.a;
+        startPlayer = p.id;
+      }
+    }
+  }
+  if (startPlayer === -1) startPlayer = 0; // fallback
+
+  G = {
+    players,
+    boneyard: tiles,
+    board: [],       // placed tile records
+    openLeft: null,  // open number on left end
+    openRight: null, // open number on right end
+    currentPlayer: startPlayer,
+    numBots,
+    handSize,
+    selectedTile: null,
+    gameOver: false,
+    firstPlay: true,
+    // Layout tracking
+    layout: {
+      headX: BOARD_CX, headY: BOARD_CY, headDir: 'L', // extends left
+      tailX: BOARD_CX, tailY: BOARD_CY, tailDir: 'R', // extends right
+      firstPlaced: false,
+    }
+  };
+}
+
+// ── Tile pip count ────────────────────────────────────────────
+function pipCount(tile) { return tile.a + tile.b; }
+function handPipTotal(player) {
+  return player.hand.reduce((s, t) => s + pipCount(t), 0);
+}
+
+// ── Valid moves ───────────────────────────────────────────────
+function getValidMoves(hand, openLeft, openRight, firstPlay) {
+  if (firstPlay) return hand.map((_, i) => i); // any tile on first play
+  return hand.reduce((acc, tile, i) => {
+    if (tile.a === openLeft || tile.b === openLeft ||
+        tile.a === openRight || tile.b === openRight) {
+      acc.push(i);
+    }
+    return acc;
+  }, []);
+}
+
+// ── Place a tile on the board ─────────────────────────────────
+/*
+  Board layout strategy:
+  - Tiles extend horizontally from center
+  - Doubles placed perpendicular (vertical when chain is horizontal)
+  - When chain gets too wide, zigzag (simplified: just extend)
+  - We track two ends: left and right, each with a direction and number
+*/
+
+function placeTile(player, tileIndex, side) {
+  // side: 'L' or 'R' or 'any' (first tile)
+  const tile = player.hand[tileIndex];
+  const lay = G.layout;
+  let record, finalA, finalB;
+
+  if (G.firstPlay) {
+    // Place first tile at center
+    finalA = tile.a; finalB = tile.b;
+    const isDouble = tile.a === tile.b;
+    record = {
+      tile,
+      x: BOARD_CX - (isDouble ? TILE_W/2 : TILE_H/2),
+      y: BOARD_CY - TILE_W/2,
+      horizontal: true,
+      a: finalA, b: finalB,
+    };
+    lay.headX = record.x;
+    lay.headY = record.y;
+    lay.tailX = record.x + (isDouble ? TILE_W : TILE_H);
+    lay.tailY = record.y;
+    G.openLeft  = finalA;
+    G.openRight = finalB;
+    lay.firstPlaced = true;
+    G.firstPlay = false;
+  } else {
+    // Determine orientation and flip tile to match
+    let matchEnd = side === 'L' ? G.openLeft : G.openRight;
+    if (tile.a === matchEnd) { finalA = tile.a; finalB = tile.b; }
+    else                     { finalA = tile.b; finalB = tile.a; }
+
+    const isDouble = finalA === finalB;
+    // Horizontally placed tiles: width=TILE_H, height=TILE_W
+    // Doubles placed perpendicular: width=TILE_W, height=TILE_H
+
+    if (side === 'L') {
+      // Attach to left (head)
+      // new tile: rightmost value must equal openLeft, leftmost = new open
+      // finalA is the matching end (left half of tile when placed) — actually:
+      // when attaching left, the RIGHT end of new tile = openLeft
+      // so we want finalB at the connection side
+      if (!isDouble) {
+        // swap so that finalB connects
+        [finalA, finalB] = [finalB, finalA];
+      }
+      const w = isDouble ? TILE_W : TILE_H;
+      const newX = lay.headX - w;
+      const newY = lay.headY;
+      record = { tile, x: newX, y: newY, horizontal: true, a: finalA, b: finalB };
+      lay.headX = newX;
+      G.openLeft = isDouble ? finalA : finalA; // leftmost value
+    } else {
+      // Attach to right (tail)
+      // finalA connects to openRight, finalB is new open end
+      if (!isDouble) {
+        // ensure finalA == openRight
+        if (finalA !== G.openRight) [finalA, finalB] = [finalB, finalA];
+      }
+      const w = isDouble ? TILE_W : TILE_H;
+      record = { tile, x: lay.tailX, y: lay.tailY, horizontal: true, a: finalA, b: finalB };
+      lay.tailX = lay.tailX + w;
+      G.openRight = isDouble ? finalB : finalB;
+    }
+  }
+
+  G.board.push(record);
+  player.hand.splice(tileIndex, 1);
+  renderBoard();
+  renderHUD();
+}
+
+// ── Bot AI logic ──────────────────────────────────────────────
+/*
+  Strategy:
+  1. Find all valid moves
+  2. Prefer moves that score (pip totals adding to multiples of 5) — just as a bonus
+  3. Otherwise prefer highest pip-value tile to shed weight
+  4. Choose best side (L or R)
+*/
+function botMove(player) {
+  const valid = getValidMoves(player.hand, G.openLeft, G.openRight, G.firstPlay);
+  if (valid.length === 0) return false; // need to draw
+
+  // Score each valid move
+  let best = null, bestScore = -Infinity;
+  for (const idx of valid) {
+    const t = player.hand[idx];
+    // Try both sides
+    const sides = [];
+    if (G.firstPlay) sides.push('R');
+    else {
+      if (t.a === G.openLeft || t.b === G.openLeft) sides.push('L');
+      if (t.a === G.openRight || t.b === G.openRight) sides.push('R');
+    }
+    for (const side of sides) {
+      // Calculate new open ends after this move
+      const pip = pipCount(t);
+      // Prefer high-value tiles (to reduce hand weight)
+      // Also lightly prefer moves that create scoring combinations
+      let sc = pip;
+      // Simple heuristic: if tile has a 5 or 0, slight bonus
+      if (t.a === 5 || t.b === 5) sc += 2;
+      if (t.a === 0 || t.b === 0) sc -= 1; // blanks are flexible, keep for later? No, shed.
+      if (sc > bestScore) {
+        bestScore = sc;
+        best = { idx, side };
+      }
+    }
+  }
+
+  if (best) {
+    placeTile(player, best.idx, best.side);
+    return true;
+  }
+  return false;
+}
+
+// ── Draw from boneyard ────────────────────────────────────────
+function drawFromBoneyard(player) {
+  // In a 2-player game: last 2 tiles can't be drawn; 4-player: last 1
+  const reserve = G.players.length <= 2 ? 2 : 1;
+  if (G.boneyard.length <= reserve) return false;
+  const drawn = G.boneyard.splice(0, 1)[0];
+  player.hand.push(drawn);
+  renderBoneyard();
+  return true;
+}
+
+// ── Check blocked game ────────────────────────────────────────
+function isBlocked() {
+  return G.players.every(p => {
+    const valid = getValidMoves(p.hand, G.openLeft, G.openRight, G.firstPlay);
+    return valid.length === 0;
+  }) && (G.boneyard.length <= (G.players.length <= 2 ? 2 : 1));
+}
+
+// ── End of hand scoring ───────────────────────────────────────
+function endHand(winnerIdx) {
+  // Winner gets sum of all other players' pips (rounded to nearest 5)
+  let total = 0;
+  for (let i = 0; i < G.players.length; i++) {
+    if (i !== winnerIdx) total += handPipTotal(G.players[i]);
+  }
+  // Round to nearest 5
+  const rounded = Math.round(total / 5) * 5;
+  G.players[winnerIdx].score += rounded;
+
+  showGameOver(winnerIdx, rounded);
+}
+
+function endBlockedHand() {
+  // Find player with least pips
+  let minPips = Infinity, minIdx = 0;
+  let allPips = G.players.map(p => handPipTotal(p));
+  for (let i = 0; i < G.players.length; i++) {
+    if (allPips[i] < minPips) { minPips = allPips[i]; minIdx = i; }
+  }
+  // Winner scores sum of other pips minus their own (rounded to nearest 5)
+  let total = allPips.reduce((a,b)=>a+b,0) - allPips[minIdx];
+  const rounded = Math.round(total / 5) * 5;
+  G.players[minIdx].score += rounded;
+  showGameOver(minIdx, rounded, true);
+}
+
+// ── Next turn ─────────────────────────────────────────────────
+function nextTurn() {
+  if (G.gameOver) return;
+  G.currentPlayer = (G.currentPlayer + 1) % G.players.length;
+  runTurn();
+}
+
+let botTimeout = null;
+function runTurn() {
+  if (G.gameOver) return;
+  const p = G.players[G.currentPlayer];
+  renderHUD();
+  renderTurnIndicator();
+
+  // Check win: hand empty
+  if (p.hand.length === 0) {
+    G.gameOver = true;
+    endHand(p.id);
+    return;
+  }
+
+  if (p.isBot) {
+    setStatus(`${p.name} is thinking…`);
+    botTimeout = setTimeout(() => doBotTurn(p), 900);
+  } else {
+    // Human turn
+    const valid = getValidMoves(p.hand, G.openLeft, G.openRight, G.firstPlay);
+    if (valid.length === 0) {
+      // Try drawing
+      const reserve = G.players.length <= 2 ? 2 : 1;
+      if (G.boneyard.length > reserve) {
+        setStatus("No moves! Click the boneyard to draw.");
+        renderPlayerHand([]); // no playable tiles yet
+      } else {
+        // Must pass
+        setStatus("No moves and no tiles to draw — turn passed.");
+        setTimeout(nextTurn, 1200);
+      }
+    } else {
+      setStatus("Your turn! Select a tile to play.");
+      renderPlayerHand(valid);
+    }
+  }
+}
+
+function doBotTurn(p) {
+  let moved = botMove(p);
+  if (!moved) {
+    // Try drawing
+    let drew = false;
+    let tries = 0;
+    const reserve = G.players.length <= 2 ? 2 : 1;
+    while (G.boneyard.length > reserve && tries < 20) {
+      drawFromBoneyard(p);
+      drew = true;
+      renderBotHands();
+      const valid = getValidMoves(p.hand, G.openLeft, G.openRight, G.firstPlay);
+      if (valid.length > 0) {
+        moved = botMove(p);
+        break;
+      }
+      tries++;
+    }
+    if (!moved) {
+      setStatus(`${p.name} has no moves and passes.`);
+    }
+  }
+
+  renderBotHands();
+  // Check win
+  if (p.hand.length === 0) {
+    G.gameOver = true;
+    endHand(p.id);
+    return;
+  }
+  // Check block
+  if (isBlocked()) {
+    G.gameOver = true;
+    endBlockedHand();
+    return;
+  }
+  setTimeout(nextTurn, 600);
+}
+
+// ── Player actions ────────────────────────────────────────────
+function playerSelectTile(tileIndex) {
+  if (G.currentPlayer !== 0 || G.gameOver) return;
+  const player = G.players[0];
+  const valid = getValidMoves(player.hand, G.openLeft, G.openRight, G.firstPlay);
+  if (!valid.includes(tileIndex)) return;
+
+  const tile = player.hand[tileIndex];
+  // Determine which sides are available
+  let canLeft  = G.firstPlay || tile.a === G.openLeft  || tile.b === G.openLeft;
+  let canRight = G.firstPlay || tile.a === G.openRight || tile.b === G.openRight;
+
+  if (canLeft && canRight) {
+    // Ask player which side — highlight selection state and prompt
+    if (G.selectedTile === tileIndex) {
+      // Second click — default to right
+      G.selectedTile = null;
+      placeTile(player, tileIndex, 'R');
+    } else {
+      G.selectedTile = tileIndex;
+      setStatus("Click same tile for RIGHT end, or click a side button.");
+      renderPlayerHand(valid);
+      // Show side choice buttons
+      showSideChoice(tileIndex, player);
+      return;
+    }
+  } else {
+    const side = canLeft ? 'L' : 'R';
+    G.selectedTile = null;
+    placeTile(player, tileIndex, side);
+  }
+
+  renderPlayerHand(getValidMoves(player.hand, G.openLeft, G.openRight, G.firstPlay));
+  // Check win
+  if (player.hand.length === 0) {
+    G.gameOver = true;
+    endHand(0);
+    return;
+  }
+  // Check block
+  if (isBlocked()) { G.gameOver = true; endBlockedHand(); return; }
+  setTimeout(nextTurn, 400);
+}
+
+function showSideChoice(tileIndex, player) {
+  // Show a temporary overlay on the player hand
+  const existing = document.getElementById('side-choice-bar');
+  if (existing) existing.remove();
+  const bar = document.createElement('div');
+  bar.id = 'side-choice-bar';
+  bar.style.cssText = `
+    position:fixed; bottom:165px; left:50%; transform:translateX(-50%);
+    background:rgba(0,0,0,0.85); border:1px solid var(--gold);
+    border-radius:14px; padding:10px 18px; z-index:60;
+    display:flex; gap:12px; align-items:center; font-size:0.85rem;
+    color:var(--text-gold);
+  `;
+  bar.innerHTML = `
+    <span>Play to:</span>
+    <button onclick="doSidePlay(${tileIndex},'L')" style="
+      background:rgba(40,140,80,0.7);border:1px solid #4a4;border-radius:8px;
+      color:#fff;padding:6px 14px;cursor:pointer;font-family:var(--font-ui);">
+      ◀ Left End (${G.openLeft})
+    </button>
+    <button onclick="doSidePlay(${tileIndex},'R')" style="
+      background:rgba(40,80,140,0.7);border:1px solid #44a;border-radius:8px;
+      color:#fff;padding:6px 14px;cursor:pointer;font-family:var(--font-ui);">
+      Right End (${G.openRight}) ▶
+    </button>
+    <button onclick="cancelSideChoice()" style="
+      background:rgba(100,40,40,0.7);border:1px solid #a44;border-radius:8px;
+      color:#fff;padding:6px 10px;cursor:pointer;font-family:var(--font-ui);">
+      ✕
+    </button>
+  `;
+  document.body.appendChild(bar);
+}
+
+function doSidePlay(tileIndex, side) {
+  const bar = document.getElementById('side-choice-bar');
+  if (bar) bar.remove();
+  G.selectedTile = null;
+  const player = G.players[0];
+  placeTile(player, tileIndex, side);
+  renderPlayerHand(getValidMoves(player.hand, G.openLeft, G.openRight, G.firstPlay));
+  if (player.hand.length === 0) { G.gameOver = true; endHand(0); return; }
+  if (isBlocked()) { G.gameOver = true; endBlockedHand(); return; }
+  setTimeout(nextTurn, 400);
+}
+
+function cancelSideChoice() {
+  const bar = document.getElementById('side-choice-bar');
+  if (bar) bar.remove();
+  G.selectedTile = null;
+  const player = G.players[0];
+  renderPlayerHand(getValidMoves(player.hand, G.openLeft, G.openRight, G.firstPlay));
+}
+
+function playerDraw() {
+  if (G.currentPlayer !== 0 || G.gameOver) return;
+  const player = G.players[0];
+  const valid = getValidMoves(player.hand, G.openLeft, G.openRight, G.firstPlay);
+  if (valid.length > 0) { setStatus("You have valid moves — play a tile!"); return; }
+
+  const reserve = G.players.length <= 2 ? 2 : 1;
+  if (G.boneyard.length <= reserve) {
+    setStatus("Boneyard is empty — turn passed!");
+    setTimeout(nextTurn, 1000);
+    return;
+  }
+
+  const drew = drawFromBoneyard(player);
+  if (drew) {
+    renderPlayerHand(getValidMoves(player.hand, G.openLeft, G.openRight, G.firstPlay));
+    renderBoneyard();
+    const newValid = getValidMoves(player.hand, G.openLeft, G.openRight, G.firstPlay);
+    if (newValid.length > 0) {
+      setStatus("You drew a tile! Now play it.");
+    } else {
+      setStatus("Drawn tile can't play yet — draw again or wait.");
+    }
+  }
+}
+
+// ── Rendering ─────────────────────────────────────────────────
+
+// Build SVG-like dots inside a tile half
+function buildDots(n) {
+  const container = document.createElement('div');
+  container.className = `dots dots-${n}`;
+  // Dot patterns: which cells are filled for 0-6
+  const patterns = {
+    0: [],
+    1: [4],          // center of 3x3 (using 1-indexed positions)
+    2: [1,9],        // top-center, bottom-center (in a 3x3 grid)
+    3: [1,5,9],
+    4: [1,3,7,9],
+    5: [1,3,5,7,9],
+    6: [1,3,4,6,7,9],
+  };
+  // Render as a simple grid
+  const filled = new Set(patterns[n] || []);
+  if (n === 0) {
+    // blank
+    container.style.cssText = 'display:flex;align-items:center;justify-content:center;';
+    return container;
+  }
+  // Use flex column approach for clarity
+  const layout = {
+    1: [[0,1,0]],
+    2: [[0,1,0],[0,0,0],[0,1,0]],
+    3: [[0,1,0],[0,1,0],[0,1,0]],
+    4: [[1,0,1],[0,0,0],[1,0,1]],
+    5: [[1,0,1],[0,1,0],[1,0,1]],
+    6: [[1,0,1],[1,0,1],[1,0,1]],
+  };
+  const grid = layout[n] || [[0]];
+  container.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;width:100%;height:100%;padding:2px;';
+  for (const row of grid) {
+    const rowEl = document.createElement('div');
+    rowEl.style.cssText = 'display:flex;justify-content:space-evenly;width:100%;';
+    for (const cell of row) {
+      const d = document.createElement('div');
+      if (cell) {
+        d.className = 'dot';
+      } else {
+        d.style.cssText = 'width:7px;height:7px;'; // spacer
+      }
+      rowEl.appendChild(d);
+    }
+    container.appendChild(rowEl);
+  }
+  return container;
+}
+
+function createTileEl(a, b, opts = {}) {
+  /*
+    opts:
+      horizontal: bool
+      classes: string[]
+      onclick: fn
+      data-index: number
+  */
+  const el = document.createElement('div');
+  el.className = 'tile ' + (opts.horizontal ? 'h' : 'v');
+  if (opts.classes) opts.classes.forEach(c => el.classList.add(c));
+  if (opts.onclick) el.addEventListener('click', opts.onclick);
+  if (opts.dataIndex !== undefined) el.dataset.index = opts.dataIndex;
+
+  const halfA = document.createElement('div');
+  halfA.className = 'tile-half';
+  halfA.appendChild(buildDots(a));
+
+  const divider = document.createElement('div');
+  divider.className = 'tile-divider';
+
+  const halfB = document.createElement('div');
+  halfB.className = 'tile-half';
+  halfB.appendChild(buildDots(b));
+
+  el.appendChild(halfA);
+  el.appendChild(divider);
+  el.appendChild(halfB);
+  return el;
+}
+
+function renderPlayerHand(validIndices = []) {
+  const handEl = document.getElementById('player-hand');
+  handEl.innerHTML = '';
+  const player = G.players[0];
+  if (!player) return;
+
+  const validSet = new Set(validIndices);
+  player.hand.forEach((tile, i) => {
+    const isPlayable = validSet.has(i);
+    const isSelected = G.selectedTile === i;
+    const el = createTileEl(tile.a, tile.b, {
+      classes: [
+        isPlayable ? 'playable' : '',
+        isSelected ? 'selected' : '',
+      ].filter(Boolean),
+      onclick: isPlayable ? () => playerSelectTile(i) : null,
+      dataIndex: i,
+    });
+    el.title = isPlayable ? `Play ${tile.a}-${tile.b}` : `${tile.a}-${tile.b}`;
+    handEl.appendChild(el);
+  });
+}
+
+function renderBotHands() {
+  const zoneIds = BOT_ZONES.slice(0, G.numBots);
+  for (let b = 0; b < G.numBots; b++) {
+    const player = G.players[b + 1];
+    const zone = document.getElementById(zoneIds[b]);
+    if (!zone || !player) continue;
+    const handEl = zone.querySelector('.bot-hand');
+    if (!handEl) continue;
+    handEl.innerHTML = '';
+    player.hand.forEach(() => {
+      const back = document.createElement('div');
+      back.className = 'bot-tile-back';
+      handEl.appendChild(back);
+    });
+    // Update count label
+    const lbl = zone.querySelector('.bot-label');
+    if (lbl) lbl.textContent = `${player.name} (${player.hand.length})`;
+  }
+}
+
+function renderBoard() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+
+  // Calculate bounding box for auto-scroll centering
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+
+  for (const rec of G.board) {
+    const isDouble = rec.a === rec.b;
+    const w = isDouble ? TILE_W : TILE_H;
+    const h = TILE_W;
+    const el = createTileEl(rec.a, rec.b, { horizontal: true });
+    el.className += ' board-tile';
+    el.style.left = rec.x + 'px';
+    el.style.top  = rec.y + 'px';
+
+    // For doubles, render vertically and offset
+    if (isDouble) {
+      // Re-create as vertical
+      el.className = el.className.replace(' h', ' v') + ' board-tile';
+      el.style.width  = TILE_W + 'px';
+      el.style.height = TILE_H + 'px';
+      el.style.left = rec.x + 'px';
+      el.style.top  = (rec.y - (TILE_H - TILE_W)/2) + 'px';
+    }
+
+    board.appendChild(el);
+    minX = Math.min(minX, rec.x);
+    minY = Math.min(minY, rec.y - 30);
+    maxX = Math.max(maxX, rec.x + (isDouble ? TILE_W : TILE_H));
+    maxY = Math.max(maxY, rec.y + TILE_W);
+  }
+
+  // Auto-scroll board wrapper to keep latest tile visible
+  if (G.board.length > 0) {
+    const wrapper = document.getElementById('board-wrapper');
+    // Center horizontally on the board
+    const midX = (minX + maxX) / 2;
+    const midY = (minY + maxY) / 2;
+    wrapper.scrollLeft = midX - wrapper.clientWidth / 2;
+    wrapper.scrollTop  = midY - wrapper.clientHeight / 2;
+  }
+}
+
+function renderBoneyard() {
+  const count = document.getElementById('boneyard-count');
+  const pile  = document.getElementById('boneyard-pile');
+  count.textContent = G.boneyard.length;
+  const reserve = G.players ? (G.players.length <= 2 ? 2 : 1) : 2;
+  pile.style.opacity = G.boneyard.length > reserve ? '1' : '0.35';
+  pile.style.cursor  = G.boneyard.length > reserve ? 'pointer' : 'not-allowed';
+}
+
+function renderHUD() {
+  const hudScores = document.getElementById('hud-scores');
+  hudScores.innerHTML = '';
+  for (const p of G.players) {
+    const chip = document.createElement('div');
+    chip.className = 'score-chip' + (p.id === G.currentPlayer ? ' active' : '');
+    chip.innerHTML = `
+      <span class="chip-name">${p.name}</span>
+      <span class="chip-score">${p.score}pts</span>
+      <span class="chip-tiles">[${p.hand.length}🀱]</span>
+    `;
+    hudScores.appendChild(chip);
+  }
+}
+
+function renderTurnIndicator() {
+  const ind = document.getElementById('turn-indicator');
+  const p = G.players[G.currentPlayer];
+  if (!p) return;
+  ind.textContent = p.id === 0 ? 'YOUR TURN' : `${p.name}'s TURN`;
+  ind.style.background = p.id === 0
+    ? 'rgba(68,170,255,0.2)' : 'rgba(201,168,76,0.15)';
+  ind.style.borderColor = p.id === 0 ? '#44aaff' : 'var(--gold)';
+  ind.style.color       = p.id === 0 ? '#8edbff' : 'var(--gold-light)';
+}
+
+function renderBotZones() {
+  const zoneIds = BOT_ZONES.slice(0, G.numBots);
+  // Hide all first
+  BOT_ZONES.forEach(id => {
+    const z = document.getElementById(id);
+    if (z) z.style.display = 'none';
+  });
+
+  // Layout positions based on number of bots
+  // Positions: top, left, right, extra (top-left area)
+  const positions = {
+    1: ['bot-top'],
+    2: ['bot-top', 'bot-right'],
+    3: ['bot-top', 'bot-left', 'bot-right'],
+    4: ['bot-extra', 'bot-top', 'bot-left', 'bot-right'],
+  };
+  const slots = positions[G.numBots] || zoneIds;
+
+  for (let b = 0; b < G.numBots; b++) {
+    const player = G.players[b + 1];
+    const zoneId = slots[b];
+    const zone = document.getElementById(zoneId);
+    if (!zone) continue;
+    zone.style.display = 'flex';
+    zone.innerHTML = `
+      <div class="bot-label">${player.name} (${player.hand.length})</div>
+      <div class="bot-hand"></div>
+    `;
+    // Fill backs
+    const handEl = zone.querySelector('.bot-hand');
+    player.hand.forEach(() => {
+      const back = document.createElement('div');
+      back.className = 'bot-tile-back';
+      handEl.appendChild(back);
+    });
+  }
+}
+
+function setStatus(msg) {
+  document.getElementById('status-bar').textContent = msg;
+}
+
+// ── Decorative menu dominoes ──────────────────────────────────
+function renderDecoRow() {
+  const row = document.getElementById('deco-row');
+  if (!row) return;
+  const pairs = [[6,6],[3,4],[5,2],[1,6],[4,4],[2,3],[0,6]];
+  row.innerHTML = '';
+  pairs.forEach(([a,b]) => {
+    const el = createTileEl(a, b, { horizontal: false });
+    el.style.width = '28px';
+    el.style.height = '54px';
+    el.style.fontSize = '0px';
+    el.querySelectorAll('.dot').forEach(d => {
+      d.style.width = '5px';
+      d.style.height = '5px';
+    });
+    row.appendChild(el);
+  });
+}
+
+// ── Game Over display ─────────────────────────────────────────
+function showGameOver(winnerIdx, bonusPoints, blocked = false) {
+  const overlay = document.getElementById('gameover-overlay');
+  const winner = G.players[winnerIdx];
+
+  document.getElementById('gameover-title').textContent =
+    winner.id === 0 ? '🏆 DOMINO!' : `${winner.name} Wins!`;
+
+  const reason = blocked
+    ? 'Game blocked — player with fewest pips wins!'
+    : winner.id === 0
+      ? 'You played all your tiles!'
+      : `${winner.name} played all their tiles.`;
+  document.getElementById('gameover-msg').textContent =
+    reason + ` (+${bonusPoints} bonus pts)`;
+
+  // Score table
+  const scoresEl = document.getElementById('gameover-scores');
+  scoresEl.innerHTML = '';
+  const sorted = [...G.players].sort((a,b) => b.score - a.score);
+  for (const p of sorted) {
+    const row = document.createElement('div');
+    row.className = 'go-score-row' + (p.id === winnerIdx ? ' winner' : '');
+    row.innerHTML = `<span>${p.id === 0 ? '👤 ' : '🤖 '}${p.name}</span><span>${p.score} pts</span>`;
+    scoresEl.appendChild(row);
+  }
+
+  overlay.classList.remove('hidden');
+}
+
+// ── Screen management ─────────────────────────────────────────
+function showStartMenu() {
+  if (botTimeout) { clearTimeout(botTimeout); botTimeout = null; }
+  const bar = document.getElementById('side-choice-bar');
+  if (bar) bar.remove();
+  document.getElementById('start-screen').classList.remove('hidden');
+  document.getElementById('game-screen').classList.add('hidden');
+  document.getElementById('gameover-overlay').classList.add('hidden');
+  G = {};
+  renderDecoRow();
+}
+
+function startGame(numBots) {
+  document.getElementById('start-screen').classList.add('hidden');
+  document.getElementById('game-screen').classList.remove('hidden');
+  document.getElementById('gameover-overlay').classList.add('hidden');
+
+  initGame(numBots);
+  renderBotZones();
+  renderBotHands();
+  renderBoard();
+  renderBoneyard();
+  renderHUD();
+  setStatus('Game started! Determining first player…');
+
+  // Announce first player
+  const fp = G.players[G.currentPlayer];
+  setTimeout(() => {
+    setStatus(fp.id === 0
+      ? `You go first (you have the highest double)!`
+      : `${fp.name} goes first (highest double).`);
+    setTimeout(runTurn, 800);
+  }, 600);
+}
+
+// ── Init ──────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  showStartMenu();
+});
+</script>
 </body>
 </html>
